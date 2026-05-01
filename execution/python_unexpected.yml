@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Python makes network connections after launch"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="python.exe" OR process_name="python3.exe" OR process_name="pythonw.exe" OR process_name="python3"
 | prevalence enrich=true window=30d
 | where host_count < 20

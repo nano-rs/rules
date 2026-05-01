@@ -31,7 +31,7 @@ ai_triage_hints:
     - "Time between hops is very short (automated tool)"
 ---
 source_type=windows_security OR source_type=auth_logs
-| where action="login" AND status="success"
+| where event_type="login" AND status="success"
 | sequence by user maxspan=1h
     fields(src_ip, dest_host, auth_type)
     [dest_host=/^(ws|wks|workstation|desktop|laptop)/i]

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "No corresponding service start"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="sc.exe" AND command_line CONTAINS "stop") OR (process_name="net.exe" AND command_line CONTAINS "stop")
 | where command_line CONTAINS "sql" OR command_line CONTAINS "backup" OR command_line CONTAINS "vss" OR command_line CONTAINS "exchange" OR command_line CONTAINS "sophos" OR command_line CONTAINS "veeam"
 | risk score=70 entity=src_host factor="Critical service stopped"

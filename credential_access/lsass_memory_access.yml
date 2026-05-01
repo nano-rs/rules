@@ -31,8 +31,8 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | sequence by src_host maxspan=15m
     fields(process_name, parent_process_name, file_path, dest_ip, command_line)
-    [action="process_access" command_line CONTAINS "lsass"]
+    [event_type="process_access" command_line CONTAINS "lsass"]
     [file_action="create" file_path=/(\.dmp|\.bin|\.log)$/i]
-    [action="network_connect" dest_ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/]
+    [event_type="network_connect" dest_ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/]
 | risk score=95 entity=src_host factor="LSASS dump with exfil pattern"
 | table timestamp, src_host, step1_process_name, step1_parent_process_name, step2_file_path, step3_dest_ip, risk_score, risk_factors

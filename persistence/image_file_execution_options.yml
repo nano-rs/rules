@@ -27,7 +27,7 @@ ai_triage_hints:
     - "Target is accessibility tool (sethc.exe, utilman.exe)"
 ---
 source_type=windows_sysmon
-| where action="registry_set"
+| where event_type="registry_set"
 | where registry_key_name CONTAINS "Image File Execution Options" AND registry_key_name CONTAINS "Debugger"
 | risk score=75 entity=src_host factor="IFEO debugger set"
 | where registry_key_name CONTAINS "sethc.exe" OR registry_key_name CONTAINS "utilman.exe" OR registry_key_name CONTAINS "osk.exe" OR registry_key_name CONTAINS "narrator.exe"

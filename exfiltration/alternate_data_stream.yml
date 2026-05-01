@@ -27,7 +27,7 @@ ai_triage_hints:
     - "ADS created by scripting engine"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS ":" AND command_line CONTAINS ">" AND process_name IN ("cmd.exe", "powershell.exe")
 | where command_line=~/[a-zA-Z]:\.*:.*>/
 | risk score=55 entity=src_host factor="ADS creation detected"

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Admin account using NTLM from workstation"
 ---
 source_type=windows_security OR source_type=auth_logs
-| where action="login" AND auth_type="ntlm" AND status="success"
+| where event_type="login" AND auth_type="ntlm" AND status="success"
 | where user CONTAINS "admin" OR user CONTAINS "svc"
 | risk score=60 entity=user factor="NTLM auth for privileged account"
 | where src_host CONTAINS "ws" OR src_host CONTAINS "desktop"

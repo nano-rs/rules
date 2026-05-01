@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Executable attachment (.exe, .scr, .bat)"
 ---
 source_type=email_gateway OR source_type=endpoint_edr
-| where action="email_received" OR action="file_open"
+| where event_type="email_received" OR event_type="file_open"
 | where file_path=/(\.docm|\.xlsm|\.pptm|\.xll|\.iso|\.img|\.vhd|\.one|\.url|\.lnk)$/i
 | risk score=55 entity=user factor="Suspicious attachment type"
 | where file_path=/(\.iso|\.img|\.vhd)$/i

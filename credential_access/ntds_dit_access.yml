@@ -25,7 +25,7 @@ ai_triage_hints:
     - "File copied to non-standard location"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (command_line CONTAINS "ntds.dit") OR (process_name="ntdsutil.exe" AND command_line CONTAINS "ifm") OR (command_line CONTAINS "vssadmin" AND command_line CONTAINS "create shadow")
 | risk score=90 entity=src_host factor="NTDS.dit access"
 | where process_name="ntdsutil.exe" AND command_line CONTAINS "create full"

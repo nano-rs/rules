@@ -24,7 +24,7 @@ ai_triage_hints:
     - "High CPU with mining pool connections"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS "stratum" OR command_line CONTAINS "xmrig" OR command_line CONTAINS "minerd" OR command_line CONTAINS "cpuminer" OR command_line CONTAINS "cryptonight" OR command_line CONTAINS "pool.minergate"
 | risk score=70 entity=src_host factor="Cryptomining detected"
 | where src_host CONTAINS "srv" OR src_host CONTAINS "server" OR src_host CONTAINS "prod"

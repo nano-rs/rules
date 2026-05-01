@@ -31,7 +31,7 @@ ai_triage_hints:
     - "Process was recently dropped to disk (check file creation time)"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="network_connect" AND dest_port > 0
+| where event_type="network_connect" AND dest_port > 0
 | prevalence enrich=true window=30d
 | where host_count < 10
 | where dest_ip != /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/

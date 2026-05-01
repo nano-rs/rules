@@ -28,7 +28,7 @@ ai_triage_hints:
     - "Downloaded file has executable extension"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="certutil.exe"
 | where command_line CONTAINS "-urlcache" OR command_line CONTAINS "-verifyctl" OR command_line CONTAINS "url"
 | where command_line CONTAINS "http"

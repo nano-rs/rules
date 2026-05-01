@@ -26,7 +26,7 @@ ai_triage_hints:
     - "fodhelper or computerdefaults used for bypass"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="fodhelper.exe" OR process_name="computerdefaults.exe" OR process_name="sdclt.exe" OR process_name="eventvwr.exe")
 | where parent_process_name NOT IN ("explorer.exe", "svchost.exe")
 | risk score=80 entity=src_host factor="Potential UAC bypass"

@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Combined with file encryption activity"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="vssadmin.exe" AND command_line CONTAINS "delete shadows") OR (process_name="wmic.exe" AND command_line CONTAINS "shadowcopy" AND command_line CONTAINS "delete") OR (command_line CONTAINS "bcdedit" AND command_line CONTAINS "recoveryenabled" AND command_line CONTAINS "no")
 | risk score=90 entity=src_host factor="Recovery options disabled"
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

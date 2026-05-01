@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Tunneling to external IP"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS "chisel" OR command_line CONTAINS "ngrok" OR command_line CONTAINS "plink" OR command_line CONTAINS "proxychains" OR command_line CONTAINS "socat" OR command_line CONTAINS "iodine" OR command_line CONTAINS "dnscat"
 | risk score=80 entity=src_host factor="Tunneling tool detected"
 | where command_line CONTAINS "http" OR command_line CONTAINS "socks"

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Netcat or socat with shell command"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon OR source_type=linux_audit
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS "nc -e" OR command_line CONTAINS "ncat -e" OR command_line CONTAINS "/dev/tcp/" OR command_line CONTAINS "bash -i" OR command_line CONTAINS "mkfifo" OR command_line CONTAINS "socket" AND command_line CONTAINS "subprocess"
 | risk score=90 entity=src_host factor="Reverse shell detected"
 | where command_line CONTAINS "/dev/tcp/"

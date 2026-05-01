@@ -25,7 +25,7 @@ ai_triage_hints:
     - "First-time RDP connection for this user-host pair"
 ---
 source_type=firewall OR source_type=network_flow OR source_type=windows_security
-| where dest_port=3389 AND action="network_connect"
+| where dest_port=3389 AND event_type="network_connect"
 | where src_ip=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/ AND dest_ip=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
 | prevalence enrich=true window=30d
 | where host_count < 5

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Large encoded payload in URL parameter"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="curl.exe" OR process_name="wget.exe" OR process_name="Invoke-WebRequest") AND command_line CONTAINS "base64"
 | where command_line CONTAINS "http"
 | risk score=60 entity=src_host factor="Encoded data transfer"

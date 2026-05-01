@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Targeting multiple accounts"
 ---
 source_type=vpn_logs OR source_type=firewall OR source_type=auth_logs
-| where action="login" AND status="failure"
+| where event_type="login" AND status="failure"
 | where source_type CONTAINS "vpn" OR message CONTAINS "VPN" OR dest_port IN (443, 1194, 500, 4500)
 | stats count, dc(user) as unique_users, min(timestamp) as timestamp by src_ip
 | where count > 20

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Allow rule for non-standard ports"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="netsh.exe" AND command_line CONTAINS "firewall"
 | where command_line CONTAINS "add" OR command_line CONTAINS "set" OR command_line CONTAINS "disable"
 | risk score=50 entity=src_host factor="Firewall rule modified"

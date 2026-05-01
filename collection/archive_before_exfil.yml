@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Archive created by scripting engine"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where process_name IN ("7z.exe", "7za.exe", "rar.exe", "zip.exe") OR (process_name="powershell.exe" AND command_line CONTAINS "Compress-Archive")
 | where command_line CONTAINS "Documents" OR command_line CONTAINS "Desktop" OR command_line CONTAINS "Finance" OR command_line CONTAINS "HR" OR command_line CONTAINS "Confidential"
 | risk score=60 entity=src_host factor="Suspicious data archiving"

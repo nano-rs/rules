@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Multiple Defender features disabled at once"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create" OR action="registry_set"
+| where event_type="process_create" OR event_type="registry_set"
 | where command_line CONTAINS "Set-MpPreference" AND (command_line CONTAINS "DisableRealtimeMonitoring" OR command_line CONTAINS "DisableBehaviorMonitoring" OR command_line CONTAINS "DisableIOAVProtection")
 | risk score=85 entity=src_host factor="Defender protection disabled"
 | where command_line CONTAINS "DisableRealtimeMonitoring $true" OR command_line CONTAINS "DisableRealtimeMonitoring 1"

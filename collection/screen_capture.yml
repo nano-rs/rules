@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Repeated screenshot activity"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS "screenshot" OR command_line CONTAINS "CopyFromScreen" OR command_line CONTAINS "BitBlt" OR command_line CONTAINS "[System.Windows.Forms.Screen]"
 | prevalence enrich=true window=30d
 | where host_count < 10

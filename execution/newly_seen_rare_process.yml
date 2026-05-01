@@ -29,7 +29,7 @@ ai_triage_hints:
     - "Execution shortly after file creation"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_hash != ""
 | prevalence enrich=true window=30d
 | where host_count < 5 AND prevalence_first_seen > now() - INTERVAL 24 HOUR

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Disk wipe without change management"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where process_name IN ("sdelete.exe", "cipher.exe", "shred", "dd") OR command_line CONTAINS "format /q" OR command_line CONTAINS "diskpart" AND command_line CONTAINS "clean"
 | risk score=80 entity=src_host factor="Disk wipe tool detected"
 | where command_line CONTAINS "/dev/sda" OR command_line CONTAINS "PhysicalDrive" OR command_line CONTAINS "clean all"

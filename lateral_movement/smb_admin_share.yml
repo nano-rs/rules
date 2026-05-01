@@ -26,7 +26,7 @@ ai_triage_hints:
     - "First-time admin share access for this user"
 ---
 source_type=windows_security OR source_type=endpoint_edr
-| where action="share_access"
+| where event_type="share_access"
 | where message CONTAINS "C$" OR message CONTAINS "ADMIN$" OR message CONTAINS "IPC$"
 | risk score=45 entity=src_host factor="Admin share access"
 | where src_host CONTAINS "ws" OR src_host CONTAINS "desktop" OR src_host CONTAINS "laptop"

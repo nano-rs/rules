@@ -26,6 +26,6 @@ ai_triage_hints:
     - "Encoded payload decodes to IEX, downloadstring, or Net.WebClient"
     - "Execution from a workstation rather than a management server"
 ---
-source_type="windows_sysmon" action="process_created" process CONTAINS "EncodedCommand"
+source_type="windows_sysmon" event_type="process_created" process CONTAINS "EncodedCommand"
 | stats count() as executions, values(process_name) as processes, values(user) as users, values(src_host) as hosts, min(timestamp) as first_seen, max(timestamp) as last_seen by src_host, user
 | where executions > 0

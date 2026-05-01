@@ -27,6 +27,6 @@ ai_triage_hints:
     - "Source IP is external or from an unusual subnet"
     - "Failures followed by a successful logon (credential found)"
 ---
-source_type="windows_event" action="logon_failure"
+source_type="windows_event" event_type="logon_failure"
 | stats count() as failures, dc(user) as targeted_users, values(user) as users, min(timestamp) as first_seen, max(timestamp) as last_seen by src_ip, src_host
 | where failures > 5

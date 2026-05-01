@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Child process makes network connections"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where parent_process_name IN ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe", "msaccess.exe")
 | where process_name IN ("cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe", "mshta.exe", "regsvr32.exe", "rundll32.exe")
 | risk score=80 entity=src_host factor="Office spawned shell"

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Registry change made by scripting engine"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="registry_set"
+| where event_type="registry_set"
 | where registry_key_name CONTAINS "\\CurrentVersion\\Run"
 | where registry_value_data CONTAINS "Temp" OR registry_value_data CONTAINS "AppData" OR registry_value_data CONTAINS "powershell" OR registry_value_data CONTAINS "cmd.exe"
 | risk score=60 entity=src_host factor="Suspicious Run key"

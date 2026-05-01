@@ -24,7 +24,7 @@ ai_triage_hints:
     - "Process image doesn't match on-disk binary"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name IN ("svchost.exe", "explorer.exe", "RuntimeBroker.exe", "dllhost.exe")
 | where process_path NOT CONTAINS "\\Windows\\"
 | risk score=90 entity=src_host factor="Process hollowing indicator"

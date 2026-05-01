@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Script contains download or execution commands"
 ---
 source_type=windows_security OR source_type=auth_logs
-| where action="directory_modify" OR action="registry_set"
+| where event_type="directory_modify" OR event_type="registry_set"
 | where command_line CONTAINS "ScriptPath" OR registry_key_name CONTAINS "\\UserInitMprLogonScript" OR file_path CONTAINS "\\NETLOGON\\"
 | risk score=70 entity=src_host factor="Logon script modified"
 | where command_line CONTAINS "powershell" OR command_line CONTAINS ".ps1" OR command_line CONTAINS "http"

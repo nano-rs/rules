@@ -25,7 +25,7 @@ ai_triage_hints:
     - "POST requests with encoded data"
 ---
 source_type=proxy
-| where action="connect" AND dest_port=443
+| where event_type="connect" AND dest_port=443
 | stats count, sum(bytes_out) as total_out, avg(bytes_out) as avg_out, min(timestamp) as timestamp by src_host, dest_host
 | where count > 50 AND avg_out < 1000
 | prevalence enrich=true window=30d

@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Browser creates executable files"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where parent_process_name IN ("chrome.exe", "firefox.exe", "msedge.exe", "iexplore.exe", "brave.exe")
 | where process_name IN ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "rundll32.exe", "regsvr32.exe", "mshta.exe")
 | risk score=85 entity=src_host factor="Browser spawned shell"

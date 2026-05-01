@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Cron command runs encoded or obfuscated script"
 ---
 source_type=linux_audit OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="crontab" OR file_path CONTAINS "/cron.d/" OR file_path CONTAINS "/crontab"
 | risk score=45 entity=src_host factor="Cron job modified"
 | where command_line CONTAINS "curl" OR command_line CONTAINS "wget" OR command_line CONTAINS "nc " OR command_line CONTAINS "python"

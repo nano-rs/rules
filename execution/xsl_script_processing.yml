@@ -25,7 +25,7 @@ ai_triage_hints:
     - "WMIC format parameter points to remote XSL"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="msxsl.exe") OR (process_name="wmic.exe" AND command_line CONTAINS "/format:")
 | where command_line CONTAINS ".xsl"
 | risk score=80 entity=src_host factor="XSL script processing"

@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Driver loaded from temp or user directory"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="driver_load"
+| where event_type="driver_load"
 | prevalence enrich=true window=30d
 | where host_count < 10
 | risk score=70 entity=src_host factor="Rare kernel driver"

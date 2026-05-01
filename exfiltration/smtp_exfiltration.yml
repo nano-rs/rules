@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Encrypted or password-protected attachment"
 ---
 source_type=email_gateway OR source_type=proxy
-| where action="email_sent" AND bytes_out > 5000000
+| where event_type="email_sent" AND bytes_out > 5000000
 | where dest_host CONTAINS "gmail.com" OR dest_host CONTAINS "yahoo.com" OR dest_host CONTAINS "hotmail.com" OR dest_host CONTAINS "protonmail.com"
 | eval bytes_out_mb = round(bytes_out / 1000000, 2)
 | risk score=55 entity=user factor="Large email to personal domain"

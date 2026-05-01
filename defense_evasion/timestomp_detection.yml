@@ -28,7 +28,7 @@ ai_triage_hints:
     - "Associated with other suspicious process activity"
 ---
 source_type=windows_sysmon
-| where action="file_time_change"
+| where event_type="file_time_change"
 | prevalence enrich=true window=30d
 | where host_count < 20
 | risk score=60 entity=src_host factor="Timestamp manipulation"

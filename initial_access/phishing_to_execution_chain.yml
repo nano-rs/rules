@@ -35,10 +35,10 @@ ai_triage_hints:
 source_type=email_gateway OR source_type=endpoint_edr OR source_type=proxy
 | sequence by user, src_host maxspan=30m
     fields(subject, sender, url, file_path, process_name, command_line)
-    [action="email_received" subject=/(urgent|verify|suspended|action.required|password|security.alert)/i]
-    [action="url_click" url_domain!=/company\.com$/i]
+    [event_type="email_received" subject=/(urgent|verify|suspended|event_type.required|password|security.alert)/i]
+    [event_type="url_click" url_domain!=/company\.com$/i]
     [file_action="create" file_path=/\.(exe|scr|bat|cmd|ps1|vbs|js|hta|msi|dll|jar)$/i]
-    [action="process_create"]
+    [event_type="process_create"]
 | risk score=90 entity=user factor="Complete phishing chain"
 | where sequence_duration_seconds < 300
 | risk score=95 factor="Rapid execution after download"
