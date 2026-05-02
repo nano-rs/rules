@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Hidden directory in non-standard location"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="attrib.exe" AND command_line CONTAINS "+h"
 | risk score=40 entity=src_host factor="Hidden file/directory created"
 | where command_line CONTAINS ".exe" OR command_line CONTAINS ".dll" OR command_line CONTAINS ".ps1"

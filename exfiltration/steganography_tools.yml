@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Followed by file upload or email"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS "steghide" OR command_line CONTAINS "openstego" OR command_line CONTAINS "snow.exe" OR command_line CONTAINS "invisible secrets" OR command_line CONTAINS "Invoke-PSImage"
 | risk score=70 entity=src_host factor="Steganography tool detected"
 | where command_line CONTAINS "embed"

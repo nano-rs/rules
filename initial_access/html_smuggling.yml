@@ -28,7 +28,7 @@ ai_triage_hints:
 source_type=endpoint_edr OR source_type=windows_sysmon
 | sequence by src_host maxspan=5m
     fields(process_name, file_path, command_line, user)
-    [action="file_open" file_path CONTAINS ".html" OR file_path CONTAINS ".htm"]
+    [event_type="file_open" file_path CONTAINS ".html" OR file_path CONTAINS ".htm"]
     [file_action="create" file_path=/(\.exe|\.dll|\.iso|\.zip|\.msi)$/i file_path CONTAINS "Downloads"]
 | risk score=75 entity=src_host factor="HTML smuggling pattern"
 | table timestamp, src_host, step1_user, step1_file_path, step2_file_path, risk_score, risk_factors

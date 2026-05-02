@@ -27,7 +27,7 @@ ai_triage_hints:
     - "Script has obfuscated name or random characters"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name IN ("cscript.exe", "wscript.exe")
 | where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData" OR command_line CONTAINS "Downloads"
 | risk score=55 entity=src_host factor="Script from suspicious path"

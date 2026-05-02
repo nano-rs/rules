@@ -27,7 +27,7 @@ ai_triage_hints:
     - "Application registered recently"
 ---
 source_type=azure_ad OR source_type=okta
-| where action="consent_grant" OR action="app_authorize"
+| where event_type="consent_grant" OR event_type="app_authorize"
 | risk score=55 entity=user factor="OAuth consent granted"
 | where message CONTAINS "Mail.Read" OR message CONTAINS "Files.ReadWrite" OR message CONTAINS "User.Read.All"
 | risk score=75 factor="Sensitive permissions granted"

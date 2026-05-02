@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Exported to user-writable directory"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="reg.exe" AND command_line CONTAINS "save" AND (command_line CONTAINS "sam" OR command_line CONTAINS "system" OR command_line CONTAINS "security"))
 | risk score=80 entity=src_host factor="Registry hive dump"
 | where command_line CONTAINS "sam" AND command_line CONTAINS "system"

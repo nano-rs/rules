@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Service created by cmd.exe or powershell"
 ---
 source_type=windows_sysmon OR source_type=windows_security
-| where action="service_create" OR (process_name="sc.exe" AND command_line CONTAINS "create")
+| where event_type="service_create" OR (process_name="sc.exe" AND command_line CONTAINS "create")
 | risk score=50 entity=src_host factor="New service created"
 | where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData" OR command_line CONTAINS "ProgramData"
 | risk score=75 factor="Suspicious binary path"

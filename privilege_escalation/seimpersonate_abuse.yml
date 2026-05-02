@@ -25,7 +25,7 @@ ai_triage_hints:
     - "SYSTEM shell from web or database service"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where parent_process_name IN ("w3wp.exe", "sqlservr.exe", "mssql.exe", "tomcat.exe")
 | where process_name IN ("cmd.exe", "powershell.exe", "whoami.exe", "net.exe")
 | risk score=80 entity=src_host factor="Service account spawning shell"

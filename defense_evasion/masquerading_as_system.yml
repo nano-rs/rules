@@ -24,7 +24,7 @@ ai_triage_hints:
     - "Hash doesn't match known Microsoft binary"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name IN ("svchost.exe", "csrss.exe", "lsass.exe", "smss.exe", "wininit.exe", "taskhost.exe", "conhost.exe")
 | where process_path NOT CONTAINS "\\Windows\\System32\\" AND process_path NOT CONTAINS "\\Windows\\SysWOW64\\"
 | risk score=85 entity=src_host factor="System process from wrong path"

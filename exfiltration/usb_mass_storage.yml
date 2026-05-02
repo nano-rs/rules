@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Large file copies after USB connection"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="device_connect" OR action="usb_connect"
+| where event_type="device_connect" OR event_type="usb_connect"
 | where message CONTAINS "Mass Storage" OR message CONTAINS "USBSTOR" OR message CONTAINS "RemovableMedia"
 | risk score=40 entity=src_host factor="USB mass storage connected"
 | where src_host CONTAINS "srv" OR src_host CONTAINS "server" OR src_host CONTAINS "dc"

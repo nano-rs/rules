@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Multiple bypass techniques in single session"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="powershell.exe" OR process_name="pwsh.exe"
 | where command_line CONTAINS "AmsiUtils" OR command_line CONTAINS "amsiInitFailed" OR command_line CONTAINS "AmsiScanBuffer" OR command_line CONTAINS "SetValue.*NonPublic"
 | risk score=85 entity=src_host factor="AMSI bypass attempt"

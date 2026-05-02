@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Targeting many ports on single host"
 ---
 source_type=firewall OR source_type=network_flow OR source_type=endpoint_edr
-| where action="network_connect"
+| where event_type="network_connect"
 | stats count, dc(dest_ip) as unique_ips, dc(dest_port) as unique_ports, min(timestamp) as timestamp by src_ip
 | where (unique_ips > 20 AND unique_ports > 5) OR unique_ports > 50
 | risk score=60 entity=src_ip factor="Port scanning detected"

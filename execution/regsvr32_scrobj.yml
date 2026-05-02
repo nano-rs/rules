@@ -27,7 +27,7 @@ ai_triage_hints:
     - "Remote URL in command line"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="regsvr32.exe"
 | where command_line CONTAINS "scrobj" OR command_line CONTAINS "/i:http" OR command_line CONTAINS "/i:https"
 | risk score=80 entity=src_host factor="Regsvr32 scriptlet execution"

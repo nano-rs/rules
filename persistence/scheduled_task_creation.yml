@@ -29,7 +29,7 @@ ai_triage_hints:
     - "Task triggers on system events rather than schedule"
 ---
 source_type=windows_sysmon OR source_type=windows_security
-| where action="scheduled_task_create" OR (process_name="schtasks.exe" AND command_line CONTAINS "/create")
+| where event_type="scheduled_task_create" OR (process_name="schtasks.exe" AND command_line CONTAINS "/create")
 | risk score=45 entity=src_host factor="Scheduled task created"
 | where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData"
 | risk score=70 factor="Suspicious execution path"

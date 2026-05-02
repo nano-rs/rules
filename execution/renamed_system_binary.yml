@@ -26,7 +26,7 @@ ai_triage_hints:
     - "File is in a non-standard location"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where original_file_name != "" AND process_name != original_file_name
 | where original_file_name IN ("cmd.exe", "powershell.exe", "pwsh.exe", "rundll32.exe", "regsvr32.exe", "mshta.exe", "certutil.exe", "wmic.exe")
 | risk score=75 entity=src_host factor="Renamed system binary"

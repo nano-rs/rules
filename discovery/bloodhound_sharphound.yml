@@ -26,7 +26,7 @@ ai_triage_hints:
     - "LDAP queries matching BloodHound patterns"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS "SharpHound" OR command_line CONTAINS "bloodhound" OR command_line CONTAINS "Invoke-BloodHound" OR (process_name="sharphound.exe")
 | risk score=85 entity=src_host factor="BloodHound/SharpHound detected"
 | where command_line CONTAINS "-CollectionMethod All"

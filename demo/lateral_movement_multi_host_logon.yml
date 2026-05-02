@@ -28,6 +28,6 @@ ai_triage_hints:
     - "Source IP is a workstation, not a server"
     - "Encoded PowerShell execution follows the logon"
 ---
-source_type="windows_event" action="logon_success" src_ip!=""
+source_type="windows_event" event_type="logon_success" src_ip!=""
 | stats count() as logons, dc(dest_host) as unique_hosts, values(dest_host) as hosts, values(user) as users by src_ip
 | where unique_hosts >= 2 AND logons >= 2

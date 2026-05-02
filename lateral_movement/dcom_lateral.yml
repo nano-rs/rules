@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Unusual DCOM application activation"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where parent_process_name="mmc.exe" OR parent_process_name="explorer.exe"
 | where process_name IN ("cmd.exe", "powershell.exe") AND command_line CONTAINS "\\*"
 | risk score=70 entity=src_host factor="Potential DCOM lateral movement"

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Configuration change removes important event types"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="sysmon.exe" OR process_name="sysmon64.exe") AND (command_line CONTAINS "-u" OR command_line CONTAINS "/u")
 | risk score=90 entity=src_host factor="Sysmon uninstall attempt"
 | where command_line CONTAINS "force"

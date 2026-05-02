@@ -28,7 +28,7 @@ ai_triage_hints:
     - "Execution of suspicious commands remotely"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create" OR action="service_create"
+| where event_type="process_create" OR event_type="service_create"
 | where process_name="psexec.exe" OR process_name="psexesvc.exe" OR command_line CONTAINS "PSEXESVC" OR command_line CONTAINS "\\\\*\\admin$"
 | risk score=65 entity=src_host factor="PsExec activity"
 | where command_line CONTAINS "powershell" OR command_line CONTAINS "cmd /c"

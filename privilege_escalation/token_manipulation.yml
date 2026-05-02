@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Token from SYSTEM or Domain Admin"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create" OR action="process_access"
+| where event_type="process_create" OR event_type="process_access"
 | where command_line CONTAINS "token" AND (command_line CONTAINS "duplicate" OR command_line CONTAINS "impersonate" OR command_line CONTAINS "assign")
 | risk score=70 entity=src_host factor="Token manipulation"
 | where process_name NOT IN ("lsass.exe", "csrss.exe", "services.exe", "svchost.exe")

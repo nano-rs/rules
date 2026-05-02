@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Inline VBScript or JavaScript in command line"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="mshta.exe"
 | where command_line CONTAINS "http" OR command_line CONTAINS "javascript:" OR command_line CONTAINS "vbscript:" OR command_line CONTAINS "Temp"
 | risk score=70 entity=src_host factor="Suspicious mshta execution"

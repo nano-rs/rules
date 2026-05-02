@@ -29,5 +29,5 @@ ai_triage_hints:
     - "Same user also has successful destructive operations"
 ---
 source_type="aws_cloudtrail" status="failure"
-| stats count() as denied_count, dc(action) as unique_actions, values(action) as actions_attempted, values(src_ip) as source_ips, min(timestamp) as first_seen, max(timestamp) as last_seen by user
+| stats count() as denied_count, dc(event_type) as unique_actions, values(event_type) as actions_attempted, values(src_ip) as source_ips, min(timestamp) as first_seen, max(timestamp) as last_seen by user
 | where denied_count > 3

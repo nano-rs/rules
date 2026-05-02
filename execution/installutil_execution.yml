@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Using /U (uninstall) parameter for code execution"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="InstallUtil.exe"
 | where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData" OR command_line CONTAINS "/U" OR command_line CONTAINS "/LogFile="
 | risk score=75 entity=src_host factor="Suspicious InstallUtil execution"

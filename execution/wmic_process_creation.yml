@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Process created is scripting engine or shell"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="wmic.exe"
 | where command_line CONTAINS "/node:" AND command_line CONTAINS "command_line" AND command_line CONTAINS "call" AND command_line CONTAINS "create"
 | risk score=75 entity=src_host factor="Remote WMIC process creation"

@@ -28,7 +28,7 @@ ai_triage_hints:
     - "Downloaded file is executable"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="bitsadmin.exe"
 | where command_line CONTAINS "/transfer" OR command_line CONTAINS "/create"
 | where command_line CONTAINS "http"

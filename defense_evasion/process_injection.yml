@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Target is a system process (svchost, explorer)"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_access"
+| where event_type="process_access"
 | where command_line CONTAINS "CreateRemoteThread" OR command_line CONTAINS "VirtualAllocEx" OR command_line CONTAINS "WriteProcessMemory" OR command_line CONTAINS "NtMapViewOfSection"
 | risk score=75 entity=src_host factor="Process injection detected"
 | prevalence enrich=true window=30d

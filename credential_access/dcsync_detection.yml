@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Non-DC requesting GetNCChanges"
 ---
 source_type=windows_security
-| where action="directory_replication" OR message CONTAINS "GetNCChanges" OR message CONTAINS "DsGetNCChanges"
+| where event_type="directory_replication" OR message CONTAINS "GetNCChanges" OR message CONTAINS "DsGetNCChanges"
 | where src_host NOT CONTAINS "dc" AND src_host NOT CONTAINS "domain"
 | risk score=95 entity=src_host factor="DCSync from non-DC"
 | table timestamp, src_host, src_ip, user, dest_host, risk_score, risk_factors

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Large PST files being created"
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="powershell.exe" OR process_name="pwsh.exe"
 | where command_line CONTAINS "Outlook.Application" OR command_line CONTAINS "New-PST" OR command_line CONTAINS "Export-Mailbox" OR command_line CONTAINS ".ost" OR command_line CONTAINS ".pst"
 | risk score=75 entity=src_host factor="Email collection detected"

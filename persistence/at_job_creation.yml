@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Created by non-admin user"
 ---
 source_type=linux_audit OR source_type=endpoint_edr OR source_type=windows_sysmon
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="at" OR process_name="at.exe"
 | risk score=35 entity=src_host factor="at job created"
 | where command_line CONTAINS "curl" OR command_line CONTAINS "wget" OR command_line CONTAINS "powershell"

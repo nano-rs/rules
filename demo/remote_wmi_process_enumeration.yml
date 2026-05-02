@@ -27,6 +27,6 @@ ai_triage_hints:
     - "Target node is a domain controller or sensitive server"
     - "Multiple target nodes queried in a short window"
 ---
-source_type="windows_sysmon" action="process_created" process_name="WMIC.exe" process CONTAINS "/node:"
+source_type="windows_sysmon" event_type="process_created" process_name="WMIC.exe" process CONTAINS "/node:"
 | stats count() as queries, values(process) as commands, values(user) as actors, min(timestamp) as first_seen, max(timestamp) as last_seen by src_host
 | where queries > 0

@@ -32,7 +32,7 @@ ai_triage_hints:
     - "Host is a workstation, not admin jump box"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name IN ("ipconfig.exe", "net.exe", "nltest.exe", "nslookup.exe", "ping.exe", "systeminfo.exe", "whoami.exe", "hostname.exe", "netstat.exe", "arp.exe", "route.exe", "tracert.exe", "nbtstat.exe", "quser.exe", "query.exe")
 | sequence by user, src_host maxspan=10m
     fields(process_name, command_line)

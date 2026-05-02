@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Change made outside business hours"
 ---
 source_type=windows_security OR source_type=auth_logs
-| where action="directory_modify"
+| where event_type="directory_modify"
 | where command_line CONTAINS "groupPolicyContainer" OR command_line CONTAINS "GPC" OR message CONTAINS "Group Policy"
 | risk score=60 entity=user factor="GPO modified"
 | eval hour = tonumber(strftime(timestamp, "%H"))

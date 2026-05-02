@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Subscription trigger is system startup or logon"
 ---
 source_type=windows_sysmon
-| where action="wmi_event" OR (process_name="wmic.exe" AND command_line CONTAINS "subscription")
+| where event_type="wmi_event" OR (process_name="wmic.exe" AND command_line CONTAINS "subscription")
 | where command_line CONTAINS "CommandLineEventConsumer" OR command_line CONTAINS "__EventFilter" OR command_line CONTAINS "ActiveScriptEventConsumer"
 | risk score=80 entity=src_host factor="WMI event subscription"
 | where command_line CONTAINS "powershell" OR command_line CONTAINS "cmd.exe"

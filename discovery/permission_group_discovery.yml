@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Multiple admin groups enumerated in sequence"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name IN ("net.exe", "net1.exe") AND command_line CONTAINS "group"
 | where command_line CONTAINS "domain admins" OR command_line CONTAINS "enterprise admins" OR command_line CONTAINS "schema admins" OR command_line CONTAINS "administrators"
 | risk score=55 entity=src_host factor="Admin group enumeration"

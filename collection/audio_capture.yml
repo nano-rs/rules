@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Audio capture by scripting engine"
 ---
 source_type=endpoint_edr
-| where action="device_access" OR action="api_call"
+| where event_type="device_access" OR event_type="api_call"
 | where command_line CONTAINS "AudioRecord" OR command_line CONTAINS "microphone" OR command_line CONTAINS "waveIn" OR command_line CONTAINS "SoundRecorder"
 | where process_name NOT IN ("teams.exe", "zoom.exe", "webex.exe", "slack.exe", "chrome.exe", "msedge.exe")
 | prevalence enrich=true window=30d

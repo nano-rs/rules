@@ -25,7 +25,7 @@ ai_triage_hints:
     - "sudo running shell or network commands"
 ---
 source_type=linux_audit OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="sudo"
 | where command_line CONTAINS "bash" OR command_line CONTAINS "sh -c" OR command_line CONTAINS "python" OR command_line CONTAINS "perl"
 | risk score=45 entity=src_host factor="Sudo shell execution"

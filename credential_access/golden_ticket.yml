@@ -25,7 +25,7 @@ ai_triage_hints:
     - "RC4 encryption on TGT when AES is policy"
 ---
 source_type=windows_security
-| where action="ticket_grant" AND auth_type="tgt"
+| where event_type="ticket_grant" AND auth_type="tgt"
 | where message CONTAINS "0x17" OR message CONTAINS "RC4" OR message CONTAINS "anomal"
 | risk score=90 entity=user factor="Potential Golden Ticket"
 | where src_host NOT CONTAINS "dc"

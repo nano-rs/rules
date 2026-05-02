@@ -24,7 +24,7 @@ ai_triage_hints:
     - "Patching ntdll to bypass ETW"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where command_line CONTAINS "logman" AND (command_line CONTAINS "stop" OR command_line CONTAINS "delete") AND command_line CONTAINS "trace"
 | risk score=80 entity=src_host factor="ETW provider tampering"
 | where command_line CONTAINS "Microsoft-Windows-Threat-Intelligence"

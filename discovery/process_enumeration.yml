@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Combined with other reconnaissance"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where (process_name="tasklist.exe" OR process_name="wmic.exe") AND command_line CONTAINS "command_line"
 | where command_line CONTAINS "MsMpEng" OR command_line CONTAINS "Carbon" OR command_line CONTAINS "Crowd" OR command_line CONTAINS "Sentinel" OR command_line CONTAINS "Cylance"
 | risk score=55 entity=src_host factor="Security process discovery"

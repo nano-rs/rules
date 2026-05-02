@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Followed by suspicious script execution"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="powershell.exe" OR process_name="pwsh.exe"
 | where command_line CONTAINS "__PSLockdownPolicy" OR command_line CONTAINS "FullLanguage" OR command_line CONTAINS "LanguageMode" OR command_line CONTAINS "Set-ExecutionPolicy Bypass"
 | risk score=80 entity=src_host factor="CLM bypass attempt"

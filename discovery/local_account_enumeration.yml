@@ -24,7 +24,7 @@ ai_triage_hints:
     - "Performed by non-admin user"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where process_name="net.exe" OR process_name="net1.exe"
 | where command_line CONTAINS "user" OR command_line CONTAINS "localgroup" OR command_line CONTAINS "group"
 | where command_line NOT CONTAINS "/add" AND command_line NOT CONTAINS "/delete"

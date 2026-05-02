@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Target is sensitive server"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where parent_process_name="wmiprvse.exe"
 | where process_name IN ("cmd.exe", "powershell.exe", "pwsh.exe", "mshta.exe", "rundll32.exe")
 | risk score=70 entity=src_host factor="WMI remote execution"

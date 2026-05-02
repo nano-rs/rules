@@ -26,7 +26,7 @@ ai_triage_hints:
     - "Remote session executing suspicious commands"
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
-| where action="process_create"
+| where event_type="process_create"
 | where parent_process_name="wsmprovhost.exe"
 | risk score=50 entity=src_host factor="WinRM remote execution"
 | where process_name IN ("cmd.exe", "powershell.exe")
