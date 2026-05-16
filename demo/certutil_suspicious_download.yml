@@ -1,7 +1,7 @@
 ---
 title: certutil_suspicious_download
 description: Detects certutil.exe used with -urlcache to download or upload files. Certutil is a legitimate Windows certificate utility frequently abused by attackers as a LOLBin for file transfers.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

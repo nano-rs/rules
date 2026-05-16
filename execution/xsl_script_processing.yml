@@ -1,7 +1,7 @@
 ---
 title: xsl_script_processing
 description: Detects msxsl.exe or wmic executing XSL stylesheets, which can contain embedded scripts for code execution.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

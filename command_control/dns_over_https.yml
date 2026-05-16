@@ -1,7 +1,7 @@
 ---
 title: dns_over_https_usage
 description: Detects applications using DNS-over-HTTPS (DoH) to bypass DNS monitoring and filtering.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

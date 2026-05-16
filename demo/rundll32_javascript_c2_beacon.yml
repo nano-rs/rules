@@ -1,7 +1,7 @@
 ---
 title: rundll32_javascript_c2_beacon
 description: "Detects rundll32.exe executing JavaScript via the javascript: protocol handler. This is a well-known C2 beacon technique used by Cobalt Strike, Empire, and other frameworks to execute code without dropping files to disk."
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: staging
 detection_mode: scheduled

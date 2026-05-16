@@ -1,7 +1,7 @@
 ---
 title: pass_the_hash_detection
 description: Detects indicators of Pass-the-Hash attacks based on NTLM authentication anomalies.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

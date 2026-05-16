@@ -1,7 +1,7 @@
 ---
 title: mshta_suspicious_execution
 description: Detects mshta.exe executing HTA files from suspicious locations or with inline scripts.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

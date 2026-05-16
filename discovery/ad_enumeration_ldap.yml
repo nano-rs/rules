@@ -1,7 +1,7 @@
 ---
 title: suspicious_ldap_enumeration
 description: Detects excessive LDAP queries indicative of Active Directory reconnaissance tools.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

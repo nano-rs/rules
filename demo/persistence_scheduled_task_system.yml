@@ -1,7 +1,7 @@
 ---
 title: persistence_scheduled_task_system
 description: Detects creation of scheduled tasks running as SYSTEM, or service creation with auto-start. Attackers use these for persistence — especially when task names mimic Windows components (WindowsUpdate, WindowsDefenderUpdate).
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

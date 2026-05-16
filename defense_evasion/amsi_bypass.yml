@@ -1,7 +1,7 @@
 ---
 title: amsi_bypass_detection
 description: Detects attempts to bypass the Antimalware Scan Interface (AMSI) in PowerShell or .NET.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

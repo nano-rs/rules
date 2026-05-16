@@ -1,7 +1,7 @@
 ---
 title: named_pipe_impersonation
 description: Detects creation of named pipes commonly associated with privilege escalation tools like PrintSpoofer and RottenPotato.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

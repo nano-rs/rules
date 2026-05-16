@@ -1,7 +1,7 @@
 ---
 title: workstation_to_dc_lateral_movement
 description: Detects lateral movement patterns where a user authenticates to multiple systems in sequence, progressing from workstations to servers to domain controllers. This pattern is characteristic of attackers moving through a network after initial compromise.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

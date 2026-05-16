@@ -1,7 +1,7 @@
 ---
 title: internal_port_scanning
 description: Detects internal network port scanning from a single source to many destinations.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

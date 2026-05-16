@@ -1,7 +1,7 @@
 ---
 title: iso_image_mount_and_execution
 description: Detects ISO/IMG file mounting followed by execution of contained files, a common phishing delivery mechanism.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

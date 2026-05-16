@@ -1,7 +1,7 @@
 ---
 title: rare_process_network_connection
 description: Detects processes with low prevalence (rarely seen across the environment) making network connections. Rare executables with network activity are often indicators of malware, backdoors, or unauthorized tools.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

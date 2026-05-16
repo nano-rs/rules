@@ -1,7 +1,7 @@
 ---
 title: persistence_wmi_event_subscription
 description: Detects WMI event subscription creation via wmic.exe. WMI subscriptions are a fileless persistence mechanism — attackers create event filters that trigger malicious actions without leaving traditional artifacts on disk.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: staging
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: encoded_powershell_execution
 description: Detects PowerShell execution with -EncodedCommand flag, commonly used to obfuscate malicious scripts and evade detection.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

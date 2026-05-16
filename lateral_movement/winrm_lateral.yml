@@ -1,7 +1,7 @@
 ---
 title: winrm_remote_execution
 description: Detects Windows Remote Management (WinRM) being used for remote command execution.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: web_application_defacement
 description: Detects modification of web server content files which may indicate website defacement.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: windows_event_log_cleared
 description: Detects clearing of Windows event logs, often done by attackers to cover their tracks.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

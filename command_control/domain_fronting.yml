@@ -1,7 +1,7 @@
 ---
 title: domain_fronting_detection
 description: Detects domain fronting where the SNI and Host header differ, used to hide C2 behind legitimate domains.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

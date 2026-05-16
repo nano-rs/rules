@@ -1,7 +1,7 @@
 ---
 title: psexec_remote_execution
 description: Detects PsExec or similar remote execution tools creating services on target hosts.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

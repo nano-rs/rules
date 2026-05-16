@@ -1,7 +1,7 @@
 ---
 title: remote_wmi_process_enumeration
 description: "Detects WMIC.exe used with /node: to remotely enumerate processes on other hosts, a common reconnaissance and lateral movement technique."
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: staging
 detection_mode: scheduled

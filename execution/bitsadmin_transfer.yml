@@ -1,7 +1,7 @@
 ---
 title: bitsadmin_file_transfer
 description: Detects BITSAdmin being used to download or upload files, often used as a LOLBin for payload delivery.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

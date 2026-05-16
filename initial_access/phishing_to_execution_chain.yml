@@ -1,7 +1,7 @@
 ---
 title: phishing_email_to_execution_chain
 description: Detects the full phishing attack chain - email with suspicious characteristics opened, link clicked to external domain, followed by file download and execution. This sequence captures the complete attack flow.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: staging
 detection_mode: scheduled

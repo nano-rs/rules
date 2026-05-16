@@ -1,7 +1,7 @@
 ---
 title: unauthorized_remote_access_tool
 description: Detects execution of remote access tools not approved by the organization.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

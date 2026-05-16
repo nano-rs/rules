@@ -1,7 +1,7 @@
 ---
 title: rundll32_unusual_dll_execution
 description: Detects rundll32.exe loading DLLs from unusual paths or with suspicious export functions.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

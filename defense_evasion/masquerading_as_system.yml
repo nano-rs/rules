@@ -1,7 +1,7 @@
 ---
 title: masquerading_as_system_process
 description: Detects processes using system binary names but running from incorrect paths.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

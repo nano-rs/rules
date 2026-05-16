@@ -1,7 +1,7 @@
 ---
 title: image_file_execution_options_debugger
 description: Detects setting of Image File Execution Options debugger keys, used to hijack process execution.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

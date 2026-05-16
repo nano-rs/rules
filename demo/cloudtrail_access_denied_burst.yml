@@ -1,7 +1,7 @@
 ---
 title: cloudtrail_access_denied_burst
 description: Detects a user generating multiple AccessDeniedException errors in AWS CloudTrail, indicating potential permission enumeration or use of compromised credentials.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: staging
 detection_mode: scheduled

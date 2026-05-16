@@ -1,7 +1,7 @@
 ---
 title: unsigned_kernel_driver_load
 description: Detects loading of unsigned or rarely seen kernel drivers which may indicate privilege escalation or rootkit installation.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

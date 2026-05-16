@@ -1,7 +1,7 @@
 ---
 title: ntds_dit_file_access
 description: Detects access or copying of the NTDS.dit file which contains all Active Directory password hashes.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

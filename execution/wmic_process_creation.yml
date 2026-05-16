@@ -1,7 +1,7 @@
 ---
 title: wmic_remote_process_creation
 description: Detects WMIC being used to create processes on remote systems, a common lateral movement and execution technique.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

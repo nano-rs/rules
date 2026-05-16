@@ -1,7 +1,7 @@
 ---
 title: database_credential_dump
 description: Detects database export utilities that may indicate data collection for exfiltration.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

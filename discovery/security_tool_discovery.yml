@@ -1,7 +1,7 @@
 ---
 title: security_tool_discovery
 description: Detects queries for installed security software, EDR agents, and antivirus products.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

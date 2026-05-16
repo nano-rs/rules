@@ -1,7 +1,7 @@
 ---
 title: browser_exploitation_indicators
 description: Detects browser processes spawning suspicious child processes that may indicate drive-by compromise.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

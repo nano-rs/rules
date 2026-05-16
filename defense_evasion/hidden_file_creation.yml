@@ -1,7 +1,7 @@
 ---
 title: hidden_file_or_directory_creation
 description: Detects creation of hidden files or directories using attrib or file naming conventions.
-author: nanos.sh
+author: nano.rs
 severity: low
 mode: live
 detection_mode: scheduled

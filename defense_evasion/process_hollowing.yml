@@ -1,7 +1,7 @@
 ---
 title: process_hollowing_indicators
 description: Detects indicators of process hollowing where a legitimate process is suspended, its memory replaced, then resumed.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

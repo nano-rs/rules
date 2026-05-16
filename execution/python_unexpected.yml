@@ -1,7 +1,7 @@
 ---
 title: unexpected_python_execution
 description: Detects Python interpreter execution on hosts where Python is not typically used, potentially indicating attacker tooling.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

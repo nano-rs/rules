@@ -1,7 +1,7 @@
 ---
 title: screen_capture_activity
 description: Detects screen capture utilities or screenshot APIs being used by unexpected processes.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

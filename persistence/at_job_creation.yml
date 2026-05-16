@@ -1,7 +1,7 @@
 ---
 title: at_job_scheduled_execution
 description: Detects creation of at jobs for one-time scheduled execution, sometimes used for persistence or delayed execution.
-author: nanos.sh
+author: nano.rs
 severity: low
 mode: live
 detection_mode: scheduled

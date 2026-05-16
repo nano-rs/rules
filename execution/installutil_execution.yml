@@ -1,7 +1,7 @@
 ---
 title: installutil_suspicious_execution
 description: Detects InstallUtil.exe being used to execute code, bypassing application whitelisting.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

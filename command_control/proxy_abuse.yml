@@ -1,7 +1,7 @@
 ---
 title: web_proxy_abuse_for_c2
 description: Detects suspicious patterns in web proxy traffic that may indicate C2 communications disguised as web traffic.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

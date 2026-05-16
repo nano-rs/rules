@@ -1,7 +1,7 @@
 ---
 title: persistence_registry_run_key
 description: Detects modification of Windows Run/RunOnce registry keys via reg.exe. Attackers add entries pointing to malicious executables in non-standard locations (ProgramData, temp) to persist across reboots.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

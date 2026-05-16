@@ -1,7 +1,7 @@
 ---
 title: regsvr32_scrobj_execution
 description: Detects regsvr32 loading scrobj.dll or executing remote scriptlets (Squiblydoo attack).
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

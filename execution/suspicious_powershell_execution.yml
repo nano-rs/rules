@@ -1,7 +1,7 @@
 ---
 title: suspicious_powershell_encoded_execution
 description: Detects PowerShell execution with suspicious command-line patterns including encoded commands, download cradles, AMSI bypass attempts, and execution policy bypasses.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

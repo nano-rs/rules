@@ -1,7 +1,7 @@
 ---
 title: critical_service_stopped
 description: Detects stopping of critical services including databases, security tools, and backup software.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: dll_search_order_hijacking
 description: Detects DLL files created in application directories that may hijack the DLL search order.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

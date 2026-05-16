@@ -1,7 +1,7 @@
 ---
 title: golden_ticket_usage
 description: Detects indicators of Kerberos Golden Ticket usage including anomalous TGT lifetime and encryption downgrade.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

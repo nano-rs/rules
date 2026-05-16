@@ -1,7 +1,7 @@
 ---
 title: system_restore_disabled
 description: Detects disabling of System Restore or deletion of shadow copies, often precursor to ransomware.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

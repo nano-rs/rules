@@ -1,7 +1,7 @@
 ---
 title: dns_data_exfiltration
 description: Detects DNS tunneling and exfiltration via long or encoded DNS queries.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

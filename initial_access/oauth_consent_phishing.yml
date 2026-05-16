@@ -1,7 +1,7 @@
 ---
 title: oauth_consent_phishing
 description: Detects OAuth application consent grants from suspicious or newly registered applications.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

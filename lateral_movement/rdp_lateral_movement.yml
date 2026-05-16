@@ -1,7 +1,7 @@
 ---
 title: rdp_lateral_movement_pattern
 description: Detects RDP connections between internal hosts that may indicate lateral movement.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled
