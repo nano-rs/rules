@@ -1,7 +1,7 @@
 ---
 title: certutil_file_download
 description: Detects certutil.exe being used to download files from the internet, a common LOLBin technique.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

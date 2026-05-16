@@ -1,7 +1,7 @@
 ---
 title: windows_failed_login_threshold
 description: Detects multiple failed login attempts from the same source host, indicating potential brute force or password spray attack.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: staging
 detection_mode: scheduled

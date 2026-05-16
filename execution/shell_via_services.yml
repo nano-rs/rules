@@ -1,7 +1,7 @@
 ---
 title: shell_spawned_by_windows_services
 description: Detects command shells or PowerShell spawned by services.exe, indicating potential service exploitation or persistence.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

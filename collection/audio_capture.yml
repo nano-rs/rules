@@ -1,7 +1,7 @@
 ---
 title: audio_recording_detection
 description: Detects processes accessing audio recording capabilities, potentially for surveillance.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

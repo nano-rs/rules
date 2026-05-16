@@ -1,7 +1,7 @@
 ---
 title: network_reconnaissance_command_sequence
 description: Detects network reconnaissance patterns where multiple discovery commands are executed in sequence. This pattern indicates an attacker or tool enumerating the network after gaining initial access.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: staging
 detection_mode: scheduled

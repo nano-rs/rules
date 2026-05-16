@@ -1,7 +1,7 @@
 ---
 title: dcsync_replication_attack
 description: Detects DCSync attacks where a non-DC host requests directory replication, used to extract password hashes.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

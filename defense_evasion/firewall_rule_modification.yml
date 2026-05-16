@@ -1,7 +1,7 @@
 ---
 title: host_firewall_rule_modification
 description: Detects modifications to the Windows firewall including adding allow rules or disabling profiles.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

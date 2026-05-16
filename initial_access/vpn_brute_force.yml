@@ -1,7 +1,7 @@
 ---
 title: vpn_brute_force_attempt
 description: Detects brute force attacks against VPN endpoints from a single source.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: group_policy_object_modification
 description: Detects modifications to Group Policy Objects which can affect security settings across the domain.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: suspicious_email_attachment_opened
 description: Detects opening of email attachments with suspicious file types or from external senders.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

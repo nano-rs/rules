@@ -1,7 +1,7 @@
 ---
 title: regular_beacon_interval_detection
 description: Detects network connections with regular beacon-like timing patterns characteristic of C2 implants.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

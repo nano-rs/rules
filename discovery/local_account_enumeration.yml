@@ -1,7 +1,7 @@
 ---
 title: local_account_enumeration
 description: Detects enumeration of local accounts and groups using net commands.
-author: nanos.sh
+author: nano.rs
 severity: low
 mode: live
 detection_mode: scheduled

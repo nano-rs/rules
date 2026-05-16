@@ -1,7 +1,7 @@
 ---
 title: sysmon_configuration_tampering
 description: Detects attempts to stop, uninstall, or modify Sysmon configuration.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

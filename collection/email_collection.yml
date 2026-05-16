@@ -1,7 +1,7 @@
 ---
 title: email_collection_via_powershell
 description: Detects PowerShell or scripts accessing mailbox data for email collection.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: suid_sgid_binary_creation
 description: Detects creation of new SUID/SGID binaries on Linux systems.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

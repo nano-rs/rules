@@ -1,7 +1,7 @@
 ---
 title: cobalt_strike_indicators
 description: Detects indicators of Cobalt Strike beacon activity including named pipes, malleable C2 patterns, and known defaults.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

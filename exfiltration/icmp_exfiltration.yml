@@ -1,7 +1,7 @@
 ---
 title: icmp_data_exfiltration
 description: Detects large or frequent ICMP traffic that may indicate data exfiltration over ICMP.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

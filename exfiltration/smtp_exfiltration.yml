@@ -1,7 +1,7 @@
 ---
 title: data_exfiltration_via_email
 description: Detects large email attachments or emails to external domains that may indicate data exfiltration.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

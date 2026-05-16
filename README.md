@@ -1,6 +1,6 @@
 # nano Detection Rules
 
-Official detection rule repository for [nano](https://nanos.sh). These rules are written in native nPL (nano Pipe Language) format and can be synced directly into your nano deployment.
+Official detection rule repository for [nano](https://nano.rs). These rules are written in native nPL (nano Pipe Language) format and can be synced directly into your nano deployment.
 
 ## Usage
 
@@ -9,7 +9,7 @@ Add this repository in nano:
 1. Navigate to **Settings → Rule Repositories**
 2. Click **Add Repository**
 3. Enter:
-   - **URL**: `https://github.com/nanos-sh/rules`
+   - **URL**: `https://github.com/nano-rs/rules`
    - **Branch**: `main`
    - **Format**: nano (nPL)
 4. Click **Sync** to fetch rules

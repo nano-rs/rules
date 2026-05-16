@@ -1,7 +1,7 @@
 ---
 title: network_share_enumeration
 description: Detects enumeration of network shares across multiple hosts.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

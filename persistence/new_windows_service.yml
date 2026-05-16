@@ -1,7 +1,7 @@
 ---
 title: new_suspicious_windows_service
 description: Detects creation of new Windows services with suspicious characteristics.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

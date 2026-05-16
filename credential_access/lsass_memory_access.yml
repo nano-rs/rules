@@ -1,7 +1,7 @@
 ---
 title: lsass_memory_credential_dump
 description: Detects potential credential dumping via LSASS memory access followed by suspicious file creation and network activity. This sequence is characteristic of tools like Mimikatz, ProcDump, or custom credential harvesters.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: staging
 detection_mode: scheduled

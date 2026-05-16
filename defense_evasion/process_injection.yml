@@ -1,7 +1,7 @@
 ---
 title: process_injection_detected
 description: Detects signs of process injection including suspicious cross-process access and memory allocation patterns.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

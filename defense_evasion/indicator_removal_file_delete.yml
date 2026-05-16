@@ -1,7 +1,7 @@
 ---
 title: mass_file_deletion_evidence_removal
 description: Detects mass deletion of files that may indicate evidence destruction or ransomware pre-encryption behavior.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

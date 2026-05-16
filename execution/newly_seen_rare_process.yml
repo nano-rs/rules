@@ -1,7 +1,7 @@
 ---
 title: newly_seen_rare_process_execution
 description: Detects execution of processes with file hashes that are both rare (seen on few hosts) AND newly appeared in the environment (first seen recently). This combination is highly indicative of new malware or attacker tools being deployed.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

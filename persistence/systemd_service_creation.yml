@@ -1,7 +1,7 @@
 ---
 title: suspicious_systemd_service_creation
 description: Detects creation of new systemd service units, potentially for persistence on Linux systems.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

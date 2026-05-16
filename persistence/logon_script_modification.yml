@@ -1,7 +1,7 @@
 ---
 title: user_logon_script_modification
 description: Detects modification of user logon scripts in Active Directory or local policy.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

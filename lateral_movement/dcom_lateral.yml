@@ -1,7 +1,7 @@
 ---
 title: dcom_lateral_movement
 description: Detects DCOM-based lateral movement using MMC, ShellBrowserWindow, or other DCOM objects.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

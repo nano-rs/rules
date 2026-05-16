@@ -1,7 +1,7 @@
 ---
 title: seimpersonate_privilege_abuse
 description: Detects abuse of SeImpersonatePrivilege commonly exploited by Potato-family exploits on Windows.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

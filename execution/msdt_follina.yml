@@ -1,7 +1,7 @@
 ---
 title: msdt_diagnostic_tool_abuse
 description: Detects Microsoft Support Diagnostic Tool (msdt.exe) execution with suspicious parameters, associated with Follina and similar exploits.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

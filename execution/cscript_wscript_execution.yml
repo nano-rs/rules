@@ -1,7 +1,7 @@
 ---
 title: cscript_wscript_suspicious_execution
 description: Detects cscript/wscript executing scripts from suspicious locations or with suspicious arguments.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

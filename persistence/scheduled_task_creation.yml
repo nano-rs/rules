@@ -1,7 +1,7 @@
 ---
 title: suspicious_scheduled_task_creation
 description: Detects creation of scheduled tasks with suspicious characteristics such as execution from temp directories, encoded PowerShell, or tasks created by unusual parent processes.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: staging
 detection_mode: scheduled

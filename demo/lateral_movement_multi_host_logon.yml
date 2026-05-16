@@ -1,7 +1,7 @@
 ---
 title: lateral_movement_multi_host_logon
 description: Detects a single source IP authenticating to multiple hosts via network logon (type 3/10) within a short window. Indicates potential lateral movement via RDP, SMB, or WinRM.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

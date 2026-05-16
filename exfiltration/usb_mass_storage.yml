@@ -1,7 +1,7 @@
 ---
 title: usb_mass_storage_data_copy
 description: Detects USB mass storage device connections and potential data copy operations.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

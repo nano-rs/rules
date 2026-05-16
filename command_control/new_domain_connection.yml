@@ -1,7 +1,7 @@
 ---
 title: connection_to_newly_seen_domain
 description: Detects network connections to domains that were first seen in the environment within the last 24 hours AND have low prevalence. New domains with few hosts connecting to them are strong indicators of C2 infrastructure, phishing, or malicious downloads.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: staging
 detection_mode: scheduled

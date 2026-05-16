@@ -1,7 +1,7 @@
 ---
 title: file_timestamp_manipulation
 description: Detects timestamp manipulation (timestomping) where a file's creation or modification time is changed to evade forensic analysis.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: staging
 detection_mode: scheduled

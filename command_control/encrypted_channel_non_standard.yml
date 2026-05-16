@@ -1,7 +1,7 @@
 ---
 title: encrypted_traffic_non_standard_port
 description: Detects TLS/SSL traffic on non-standard ports which may indicate covert C2 channels.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

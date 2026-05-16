@@ -1,7 +1,7 @@
 ---
 title: ransomware_file_encryption_pattern
 description: Detects rapid file modification and renaming patterns consistent with ransomware encryption.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

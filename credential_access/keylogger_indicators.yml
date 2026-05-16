@@ -1,7 +1,7 @@
 ---
 title: keylogger_behavior_indicators
 description: Detects processes exhibiting keylogger behavior such as setting keyboard hooks or accessing input APIs.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

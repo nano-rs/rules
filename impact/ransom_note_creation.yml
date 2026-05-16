@@ -1,7 +1,7 @@
 ---
 title: ransom_note_file_creation
 description: Detects creation of ransom note files commonly dropped by ransomware.
-author: nanos.sh
+author: nano.rs
 severity: critical
 mode: live
 detection_mode: scheduled

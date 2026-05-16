@@ -1,7 +1,7 @@
 ---
 title: kerberoasting_activity
 description: Detects Kerberos service ticket requests (TGS) for multiple SPNs, indicative of Kerberoasting attacks.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

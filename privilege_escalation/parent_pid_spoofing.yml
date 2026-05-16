@@ -1,7 +1,7 @@
 ---
 title: parent_pid_spoofing_detection
 description: Detects processes where the parent PID has been spoofed to appear as a different process.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

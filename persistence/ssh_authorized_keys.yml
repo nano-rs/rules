@@ -1,7 +1,7 @@
 ---
 title: ssh_authorized_keys_modification
 description: Detects modifications to SSH authorized_keys files for persistent access.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

@@ -1,7 +1,7 @@
 ---
 title: wmi_event_subscription_persistence
 description: Detects WMI event subscription creation used for fileless persistence.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

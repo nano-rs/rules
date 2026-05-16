@@ -1,7 +1,7 @@
 ---
 title: cryptomining_resource_hijacking
 description: Detects cryptocurrency mining activity hijacking system resources.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

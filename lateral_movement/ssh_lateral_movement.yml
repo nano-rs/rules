@@ -1,7 +1,7 @@
 ---
 title: ssh_lateral_movement_chain
 description: Detects SSH sessions chaining through multiple internal hosts, indicative of lateral movement.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

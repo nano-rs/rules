@@ -1,7 +1,7 @@
 ---
 title: suspicious_cron_job_creation
 description: Detects creation of cron jobs with suspicious commands or by unusual processes.
-author: nanos.sh
+author: nano.rs
 severity: medium
 mode: live
 detection_mode: scheduled

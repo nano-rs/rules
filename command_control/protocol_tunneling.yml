@@ -1,7 +1,7 @@
 ---
 title: protocol_tunneling_detection
 description: Detects tunneling tools that encapsulate traffic within allowed protocols (HTTP, DNS, ICMP).
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled

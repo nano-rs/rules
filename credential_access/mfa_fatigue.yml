@@ -1,7 +1,7 @@
 ---
 title: mfa_push_notification_fatigue
 description: Detects MFA fatigue attacks with repeated push notifications to a user in a short period.
-author: nanos.sh
+author: nano.rs
 severity: high
 mode: live
 detection_mode: scheduled
