@@ -26,7 +26,7 @@ ai_triage_hints:
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where file_action="create"
-| where file_path CONTAINS "\\Start Menu\\Programs\\Startup\\"
+| where file_path CONTAINS "\\Start Menu\\Programs\\Startup"
 | risk score=60 entity=src_host factor="Startup folder persistence"
 | where file_path=/(\.exe|\.bat|\.cmd|\.vbs|\.js|\.ps1|\.hta)$/i
 | risk score=80 factor="Executable in startup"
