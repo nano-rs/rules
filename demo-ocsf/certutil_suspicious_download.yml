@@ -1,0 +1,33 @@
+---
+title: certutil_suspicious_download
+description: Detects certutil.exe used with -urlcache to download or upload files. Certutil is a legitimate Windows certificate utility frequently abused by attackers as a LOLBin for file transfers.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0011
+  - TA0005
+mitre_techniques:
+  - T1105
+  - T1036
+tags:
+  - exfiltration
+  - lolbin
+  - endpoint
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "URL points to a known internal PKI or certificate server"
+    - "Run by a certificate management service account"
+  suspicious_when:
+    - "URL points to an external IP address or unknown domain"
+    - "Target file is in a temp directory"
+    - "Preceded by LSASS dump or data staging activity"
+---
+source_type="windows_sysmon" process.name="certutil.exe" process.cmd_line CONTAINS "urlcache"
+| stats count() as hits, values(process.cmd_line) as commands, values(actor.user.name) as users by device.hostname
+| where hits > 0

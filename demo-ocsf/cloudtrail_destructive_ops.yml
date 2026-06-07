@@ -1,0 +1,33 @@
+---
+title: cloudtrail_destructive_ops_suspicious_source
+description: Detects AWS resource deletion or termination operations clustered from a single source IP, indicating potential account compromise or insider threat.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: cloud
+mitre_tactics:
+  - TA0040
+mitre_techniques:
+  - T1485
+tags:
+  - cloud
+  - aws
+  - destructive
+  - impact
+  - logblaster-demo
+ai_triage_hints:
+  ignore_when:
+    - "Operations are part of a known Terraform destroy or CloudFormation stack deletion"
+    - "Source IP belongs to CI/CD pipeline"
+  suspicious_when:
+    - "Source IP is outside corporate network"
+    - "Multiple resource types deleted in a short window"
+    - "User has recent AccessDeniedException errors (enumeration then destruction)"
+    - "No MFA used for the session"
+---
+source_type="aws_cloudtrail" (api.operation CONTAINS "Delete" OR api.operation CONTAINS "Terminate")
+| stats count() as delete_count, values(api.operation) as operations, values(actor.user.name) as actors, min(timestamp) as first_seen, max(timestamp) as last_seen by src_endpoint.ip
+| where delete_count > 2

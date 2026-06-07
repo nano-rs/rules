@@ -1,0 +1,33 @@
+---
+title: cloudtrail_access_denied_burst
+description: Detects a user generating multiple AccessDeniedException errors in AWS CloudTrail, indicating potential permission enumeration or use of compromised credentials.
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: cloud
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1087
+tags:
+  - cloud
+  - aws
+  - access-denied
+  - enumeration
+  - logblaster-demo
+ai_triage_hints:
+  ignore_when:
+    - "User is a service role hitting expected permission boundaries"
+    - "Denied actions are all read-only (Describe*, List*, Get*)"
+  suspicious_when:
+    - "Denied actions include write or delete operations"
+    - "Source IP is outside corporate network"
+    - "User has no MFA and is accessing from an unusual region"
+    - "Same user also has successful destructive operations"
+---
+source_type="aws_cloudtrail" status="Failure"
+| stats count() as denied_count, dc(api.operation) as unique_actions, values(api.operation) as actions_attempted, values(src_endpoint.ip) as source_ips, min(timestamp) as first_seen, max(timestamp) as last_seen by actor.user.name
+| where denied_count > 3

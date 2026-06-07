@@ -26,8 +26,21 @@ Add this repository in nano:
 ├── exfiltration/         # Data theft, staging, transfer
 ├── persistence/          # Scheduled tasks, registry, services
 ├── discovery/            # Network/system enumeration
-└── command_control/      # C2 communications, beaconing
+├── command_control/      # C2 communications, beaconing
+├── demo/                 # Curated demo rules (UDM schema)
+└── demo-ocsf/            # The same demo rules, ported to the OCSF schema
 ```
+
+### Demo rule sets
+
+`demo/` and `demo-ocsf/` contain the same curated detections in two schema
+flavours. Import the set that matches your deployment's schema profile:
+
+- **`demo/`** — for the default UDM schema (fields like `process_name`,
+  `command_line`, `src_host`, `src_ip`, `event_type`).
+- **`demo-ocsf/`** — for deployments running the OCSF schema profile
+  (`NANO_SCHEMA_PROFILE=ocsf`). Queries use OCSF promoted fields
+  (`process.name`, `process.cmd_line`, `src_endpoint.ip`, `class_uid`, …).
 
 ## Rule Format
 

@@ -1,0 +1,32 @@
+---
+title: windows_failed_login_threshold
+description: Detects multiple failed login attempts from the same source host, indicating potential brute force or password spray attack.
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1110
+tags:
+  - identity
+  - brute-force
+  - authentication
+  - logblaster-demo
+ai_triage_hints:
+  ignore_when:
+    - "Source is a service account with known retry behavior"
+    - "Failures are from a single user mistyping their password (1-2 failures)"
+  suspicious_when:
+    - "Multiple distinct users targeted from the same source"
+    - "Failures use network logon type (type 3) from a workstation"
+    - "Source IP is external or from an unusual subnet"
+    - "Failures followed by a successful logon (credential found)"
+---
+source_type="windows_event" class_uid=3002 status="Failure"
+| stats count() as failures, dc(user.name) as targeted_users, values(user.name) as users, min(timestamp) as first_seen, max(timestamp) as last_seen by src_endpoint.ip, src_endpoint.hostname
+| where failures > 5

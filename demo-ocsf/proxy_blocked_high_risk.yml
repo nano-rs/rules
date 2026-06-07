@@ -1,0 +1,33 @@
+---
+title: proxy_blocked_high_risk_traffic
+description: Detects web traffic blocked by the proxy due to high threat risk, indicating potential C2 communication, malware download, or access to known-malicious domains.
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: network
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1071.001
+tags:
+  - network
+  - proxy
+  - blocked
+  - c2
+  - logblaster-demo
+ai_triage_hints:
+  ignore_when:
+    - "Domain is a known ad network or tracker being blocked by policy"
+    - "User is browsing and hit a categorization false positive"
+  suspicious_when:
+    - "Same source IP has multiple blocked domains in a short window"
+    - "Blocked domain has DGA-like entropy or is newly registered"
+    - "Request was to a non-standard port (not 80/443)"
+    - "Host also shows suspicious process activity in Sysmon"
+---
+source_type="conduit_proxy" severity_id=4
+| stats count() as blocked_count, values(http_request.url.hostname) as domains, values(http_request.url.url_string) as urls, min(timestamp) as first_seen, max(timestamp) as last_seen by src_endpoint.ip
+| where blocked_count > 0

@@ -1,0 +1,31 @@
+---
+title: encoded_powershell_execution
+description: Detects PowerShell execution with -EncodedCommand flag, commonly used to obfuscate malicious scripts and evade detection.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1059.001
+tags:
+  - powershell
+  - evasion
+  - endpoint
+  - logblaster-demo
+ai_triage_hints:
+  ignore_when:
+    - "Command is from SCCM, Intune, or other management tools"
+    - "User is a known IT admin running approved automation"
+  suspicious_when:
+    - "Parent process is cmd.exe or an Office application"
+    - "Encoded payload decodes to IEX, downloadstring, or Net.WebClient"
+    - "Execution from a workstation rather than a management server"
+---
+source_type="windows_sysmon" class_uid=1007 process.cmd_line CONTAINS "EncodedCommand"
+| stats count() as executions, values(process.name) as processes, values(actor.user.name) as users, values(device.hostname) as hosts, min(timestamp) as first_seen, max(timestamp) as last_seen by device.hostname, actor.user.name
+| where executions > 0

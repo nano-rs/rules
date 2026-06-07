@@ -1,0 +1,33 @@
+---
+title: persistence_scheduled_task_system
+description: Detects creation of scheduled tasks running as SYSTEM, or service creation with auto-start. Attackers use these for persistence — especially when task names mimic Windows components (WindowsUpdate, WindowsDefenderUpdate).
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1053.005
+  - T1543.003
+tags:
+  - persistence
+  - scheduled-task
+  - service
+  - endpoint
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "Task is created by GPO, SCCM, or Intune during software deployment"
+    - "Service is part of a known software installation"
+  suspicious_when:
+    - "Binary path points to ProgramData, temp, or AppData"
+    - "Task/service name mimics a Windows component"
+    - "Created shortly after reconnaissance or lateral movement"
+---
+source_type="windows_sysmon" ((process.name="schtasks.exe" process.cmd_line CONTAINS "/create" process.cmd_line CONTAINS "SYSTEM") OR (process.name="sc.exe" process.cmd_line CONTAINS "create" process.cmd_line CONTAINS "auto"))
+| stats count() as hits, values(process.cmd_line) as commands, values(actor.user.name) as users by device.hostname
+| where hits > 0

@@ -1,0 +1,31 @@
+---
+title: persistence_wmi_event_subscription
+description: Detects WMI event subscription creation via wmic.exe. WMI subscriptions are a fileless persistence mechanism — attackers create event filters that trigger malicious actions without leaving traditional artifacts on disk.
+author: nano.rs
+severity: critical
+mode: staging
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1546.003
+tags:
+  - persistence
+  - wmi
+  - fileless
+  - endpoint
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "WMI subscription is created by SCCM or a known management agent"
+  suspicious_when:
+    - "Filter name is unusual or non-descriptive"
+    - "Created outside of software deployment windows"
+    - "Same host shows other persistence mechanisms in the same timeframe"
+---
+source_type="windows_sysmon" process.name="wmic.exe" process.cmd_line CONTAINS "EventFilter" process.cmd_line CONTAINS "CREATE"
+| stats count() as hits, values(process.cmd_line) as commands, values(actor.user.name) as users by device.hostname
+| where hits > 0
