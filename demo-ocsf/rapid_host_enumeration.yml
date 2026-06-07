@@ -1,0 +1,34 @@
+---
+title: rapid_host_enumeration
+description: Detects a sequence of common Windows discovery commands (whoami, ipconfig, net user, net group) executed in rapid succession from the same host. This pattern is characteristic of post-exploitation reconnaissance.
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1033
+  - T1016
+  - T1087.002
+  - T1069.002
+tags:
+  - discovery
+  - recon
+  - endpoint
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "User is a sysadmin running a known inventory or audit script"
+    - "Commands originate from a management tool (SCCM, Ansible)"
+  suspicious_when:
+    - "Commands run within minutes of each other"
+    - "User is not a domain admin or IT staff"
+    - "Parent process is cmd.exe spawned from an unusual location"
+---
+source_type="windows_sysmon" (process.name="whoami.exe" OR process.name="ipconfig.exe" OR process.name="net.exe" OR process.name="nltest.exe" OR process.name="systeminfo.exe" OR process.name="tasklist.exe")
+| stats count() as recon_commands, dc(process.name) as unique_tools, values(process.name) as tools, values(process.cmd_line) as commands, min(timestamp) as first_seen, max(timestamp) as last_seen by device.hostname, actor.user.name
+| where recon_commands >= 3 AND unique_tools >= 3

@@ -1,0 +1,33 @@
+---
+title: lateral_movement_multi_host_logon
+description: Detects a single source IP authenticating to multiple hosts via network logon (type 3/10) within a short window. Indicates potential lateral movement via RDP, SMB, or WinRM.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0008
+mitre_techniques:
+  - T1021.001
+  - T1021.002
+tags:
+  - lateral-movement
+  - rdp
+  - smb
+  - identity
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "Source IP belongs to a known vulnerability scanner or management server"
+    - "User is a service account performing expected multi-host operations"
+  suspicious_when:
+    - "Logon failures precede successful logons"
+    - "Source IP is a workstation, not a server"
+    - "Encoded PowerShell execution follows the logon"
+---
+source_type="windows_event" class_uid=3002 status="Success" src_endpoint.ip!=""
+| stats count() as logons, dc(dst_endpoint.hostname) as unique_hosts, values(dst_endpoint.hostname) as hosts, values(user.name) as users by src_endpoint.ip
+| where unique_hosts >= 2 AND logons >= 2

@@ -1,0 +1,33 @@
+---
+title: rundll32_javascript_c2_beacon
+description: "Detects rundll32.exe executing JavaScript via the javascript: protocol handler. This is a well-known C2 beacon technique used by Cobalt Strike, Empire, and other frameworks to execute code without dropping files to disk."
+author: nano.rs
+severity: critical
+mode: staging
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0011
+  - TA0002
+mitre_techniques:
+  - T1218.011
+  - T1059.007
+tags:
+  - c2
+  - beacon
+  - lolbin
+  - endpoint
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "This technique has no legitimate use — always investigate"
+  suspicious_when:
+    - "Recurring at regular intervals (beacon pattern)"
+    - "Parent process is explorer.exe or a browser"
+    - "Associated with network connections to external IPs"
+---
+source_type="windows_sysmon" process.name="rundll32.exe" process.cmd_line CONTAINS "javascript:"
+| stats count() as beacons, values(process.cmd_line) as commands, values(actor.user.name) as users, min(timestamp) as first_seen, max(timestamp) as last_seen by device.hostname
+| where beacons > 0

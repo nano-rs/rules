@@ -1,0 +1,31 @@
+---
+title: persistence_registry_run_key
+description: Detects modification of Windows Run/RunOnce registry keys via reg.exe. Attackers add entries pointing to malicious executables in non-standard locations (ProgramData, temp) to persist across reboots.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1547.001
+tags:
+  - persistence
+  - registry
+  - endpoint
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "Software installer adding its own Run key during installation"
+    - "IT management tool configuring startup applications"
+  suspicious_when:
+    - "Value data points to ProgramData, temp, or user-writable paths"
+    - "Registry value name mimics a security product"
+    - "reg.exe spawned from cmd.exe or PowerShell in an attack chain"
+---
+source_type="windows_sysmon" process.name="reg.exe" process.cmd_line CONTAINS "CurrentVersion\\Run"
+| stats count() as hits, values(process.cmd_line) as commands, values(actor.user.name) as users by device.hostname
+| where hits > 0

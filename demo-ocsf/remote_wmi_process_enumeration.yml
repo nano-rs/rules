@@ -1,0 +1,32 @@
+---
+title: remote_wmi_process_enumeration
+description: "Detects WMIC.exe used with /node: to remotely enumerate processes on other hosts, a common reconnaissance and lateral movement technique."
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1047
+tags:
+  - wmi
+  - reconnaissance
+  - lateral-movement
+  - endpoint
+  - logblaster-demo
+ai_triage_hints:
+  ignore_when:
+    - "Source is a management server or SCCM host"
+    - "User is a domain admin performing inventory"
+  suspicious_when:
+    - "Source is a workstation, not a management server"
+    - "Target node is a domain controller or sensitive server"
+    - "Multiple target nodes queried in a short window"
+---
+source_type="windows_sysmon" class_uid=1007 process.name="WMIC.exe" process.cmd_line CONTAINS "/node:"
+| stats count() as queries, values(process.cmd_line) as commands, values(actor.user.name) as actors, min(timestamp) as first_seen, max(timestamp) as last_seen by device.hostname
+| where queries > 0
