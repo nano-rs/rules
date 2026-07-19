@@ -9,7 +9,6 @@ schedule: "*/10 * * * *"
 lookback: 30m
 folder: endpoint
 mitre_tactics:
-  - TA0010
   - TA0005
 mitre_techniques:
   - T1564.004
@@ -29,7 +28,7 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where command_line CONTAINS ":" AND command_line CONTAINS ">" AND process_name IN ("cmd.exe", "powershell.exe")
-| where command_line=~/[a-zA-Z]:\.*:.*>/
+| where command_line=/>\s*[a-zA-Z]:\\[^:]*:[^:\\]+/
 | risk score=55 entity=src_host factor="ADS creation detected"
 | where command_line CONTAINS "type" OR command_line CONTAINS "echo"
 | risk score=70 factor="Data hidden in ADS"

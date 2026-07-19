@@ -10,7 +10,6 @@ lookback: 10m
 folder: identity
 mitre_tactics:
   - TA0006
-  - TA0008
 mitre_techniques:
   - T1558.001
 tags:

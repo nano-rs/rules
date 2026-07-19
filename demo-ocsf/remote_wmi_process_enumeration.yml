@@ -9,9 +9,11 @@ schedule: "*/5 * * * *"
 lookback: 15m
 folder: endpoint
 mitre_tactics:
+  - TA0002
   - TA0007
 mitre_techniques:
   - T1047
+  - T1057
 tags:
   - wmi
   - reconnaissance

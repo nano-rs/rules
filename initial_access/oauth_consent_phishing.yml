@@ -10,6 +10,7 @@ lookback: 15m
 folder: identity
 mitre_tactics:
   - TA0001
+  - TA0008
 mitre_techniques:
   - T1566.002
   - T1550.001

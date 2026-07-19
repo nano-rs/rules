@@ -28,6 +28,6 @@ source_type=dns OR source_type=firewall
 | where dest_port=53
 | where dest_host!="" AND length(dest_host) > 60
 | risk score=70 entity=src_host factor="Long DNS query (possible tunneling)"
-| where dest_host=~/^[a-z0-9]{30,}\./i
+| where dest_host=/^[a-z0-9]{30,}\./i
 | risk score=85 factor="High entropy DNS query"
 | table timestamp, src_host, src_ip, dest_host, risk_score, risk_factors
