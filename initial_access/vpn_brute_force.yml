@@ -9,7 +9,7 @@ schedule: "*/5 * * * *"
 lookback: 15m
 folder: network
 mitre_tactics:
-  - TA0001
+  - TA0006
 mitre_techniques:
   - T1110
 tags:

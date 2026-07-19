@@ -11,10 +11,11 @@ folder: endpoint
 mitre_tactics:
   - TA0002
   - TA0005
+  - TA0112
 mitre_techniques:
   - T1059.001
   - T1027
-  - T1562.001
+  - T1685
 tags:
   - powershell
   - obfuscation
@@ -33,7 +34,7 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=windows_security OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="powershell.exe" OR process_name="pwsh.exe"
-| where command_line~"-e[ncodedcommand]*" OR command_line~"-enc " OR command_line CONTAINS "IEX" OR command_line CONTAINS "Invoke-Expression" OR command_line CONTAINS "downloadstring"
+| where command_line=/-e(nc(odedcommand)?)?\s/i OR command_line CONTAINS "IEX" OR command_line CONTAINS "Invoke-Expression" OR command_line CONTAINS "downloadstring"
 | risk score=50 entity=src_host factor="Suspicious PowerShell"
 | where command_line CONTAINS "-enc"
 | risk score=70 factor="Encoded command"

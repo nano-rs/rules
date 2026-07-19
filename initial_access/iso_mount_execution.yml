@@ -9,8 +9,7 @@ schedule: "*/3 * * * *"
 lookback: 10m
 folder: endpoint
 mitre_tactics:
-  - TA0001
-  - TA0005
+  - TA0112
 mitre_techniques:
   - T1553.005
 tags:
@@ -28,7 +27,7 @@ ai_triage_hints:
 ---
 source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
-| where process_path CONTAINS ":\\Users\\" AND process_path=~/[D-Z]:\/
+| where process_path=/^[D-Z]:/
 | where process_name=/(\.exe|\.lnk|\.bat|\.cmd|\.vbs|\.js|\.ps1)$/i
 | risk score=65 entity=src_host factor="Execution from mounted image"
 | where parent_process_name="explorer.exe"

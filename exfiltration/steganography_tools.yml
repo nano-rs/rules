@@ -9,7 +9,6 @@ schedule: "*/10 * * * *"
 lookback: 30m
 folder: endpoint
 mitre_tactics:
-  - TA0010
   - TA0005
 mitre_techniques:
   - T1027.003

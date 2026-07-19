@@ -10,7 +10,6 @@ lookback: 5m
 folder: endpoint
 mitre_tactics:
   - TA0001
-  - TA0002
 mitre_techniques:
   - T1189
 tags:
