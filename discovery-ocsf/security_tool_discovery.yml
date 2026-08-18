@@ -1,0 +1,32 @@
+---
+title: security_tool_discovery
+description: Detects queries for installed security software, EDR agents, and antivirus products.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1518.001
+tags:
+  - security_discovery
+  - evasion_prep
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT inventory tool checking compliance"
+    - "MDM agent checking security posture"
+  suspicious_when:
+    - "Query combined with other reconnaissance"
+    - "Performed by scripting engine"
+---
+class_uid=1007 activity_id=1
+| where process.cmd_line CONTAINS "AntiVirusProduct" OR process.cmd_line CONTAINS "SecurityCenter" OR (process.name="wmic.exe" AND process.cmd_line CONTAINS "antivirus") OR process.cmd_line CONTAINS "Get-MpComputerStatus"
+| risk score=50 entity=device.hostname factor="Security tool discovery"
+| where process.name IN ("powershell.exe", "cmd.exe", "wscript.exe")
+| risk score=70 factor="Script-based security recon"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

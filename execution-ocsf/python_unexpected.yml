@@ -1,0 +1,35 @@
+---
+title: unexpected_python_execution
+description: Detects Python interpreter execution on hosts where Python is not typically used, potentially indicating attacker tooling.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1059.006
+tags:
+  - python
+  - scripting
+  - cross_platform
+ai_triage_hints:
+  ignore_when:
+    - "Host is a developer workstation"
+    - "Python is used by known automation tools"
+  suspicious_when:
+    - "Python runs encoded or obfuscated script"
+    - "Python makes network connections after launch"
+---
+metadata.log_source="endpoint_edr" OR metadata.log_source="windows_sysmon"
+| where class_uid=1007 AND activity_id=1
+| where process.name="python.exe" OR process.name="python3.exe" OR process.name="pythonw.exe" OR process.name="python3"
+| prevalence enrich=true window=30d
+| where host_count < 20
+| risk score=50 entity=device.hostname factor="Uncommon Python execution"
+| where process.cmd_line CONTAINS "-c" AND (process.cmd_line CONTAINS "import socket" OR process.cmd_line CONTAINS "import subprocess" OR process.cmd_line CONTAINS "exec(")
+| risk score=85 factor="Suspicious Python one-liner"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, unmapped.risk_factors

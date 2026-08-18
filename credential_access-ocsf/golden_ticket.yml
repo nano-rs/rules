@@ -1,0 +1,32 @@
+---
+title: golden_ticket_usage
+description: Detects indicators of Kerberos Golden Ticket usage including anomalous TGT lifetime and encryption downgrade.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 10m
+folder: identity
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1558.001
+tags:
+  - golden_ticket
+  - kerberos
+  - active_directory
+ai_triage_hints:
+  ignore_when:
+    - "Known Kerberos configuration anomaly"
+  suspicious_when:
+    - "TGT with abnormally long lifetime"
+    - "RC4 encryption on TGT when AES is policy"
+---
+metadata.log_source IN ("windows_event", "windows_security") class_uid=3002
+| where metadata.event_code="4768" OR auth_protocol_id=2 OR auth_protocol="Kerberos"
+| where message CONTAINS "0x17" OR message CONTAINS "RC4" OR message CONTAINS "anomal"
+| risk score=90 entity=user.name factor="Potential Golden Ticket"
+| where src_endpoint.hostname NOT CONTAINS "dc"
+| risk score=95 factor="TGT from non-DC"
+| table time, user.name, src_endpoint.ip, src_endpoint.hostname, dst_endpoint.hostname, risk_score, risk_factors

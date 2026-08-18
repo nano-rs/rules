@@ -1,0 +1,47 @@
+---
+title: drive_by_js_execution_chain
+description: Detects creation of a JavaScript file on an endpoint followed by WScript execution, outbound network activity, and a WScript-spawned PowerShell stage. The upstream proxy ZIP-download step and the file-hash prevalence check from the UDM rule are not expressible in OCSF 1.9 on this deployment (no shared join key between proxy and endpoint events; no promoted prevalence field), so the chain is endpoint-only.
+author: nano.rs
+severity: critical
+mode: staging
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0001
+  - TA0002
+  - TA0011
+mitre_techniques:
+  - T1189
+  - T1204.002
+  - T1059.007
+  - T1059.001
+  - T1071.001
+tags:
+  - drive_by
+  - javascript
+  - wscript
+  - powershell
+  - prevalence
+  - injector-demo
+ai_triage_hints:
+  ignore_when:
+    - "The archive and script are part of an approved software deployment or security test"
+    - "The JavaScript hash and destination are approved by the security team"
+  suspicious_when:
+    - "The archive came from a newly registered or low-reputation domain"
+    - "The JavaScript hash has not appeared on other hosts"
+    - "WScript connects to the internet before spawning hidden PowerShell"
+    - "Follow-on discovery or Run-key persistence occurs on the same endpoint"
+  context: "Validate that all endpoint steps share one device.hostname. Review the JavaScript file path and hash, the WScript destination, and the PowerShell command line. Pivot manually to conduit_proxy HTTP Activity on the host's src_endpoint.ip to recover the delivery step, which this rule cannot correlate automatically under OCSF 1.9."
+---
+metadata.log_source="windows_sysmon"
+| sequence by device.hostname maxspan=5m
+    fields(file.path, file.hashes.value, process.name, process.cmd_line, actor.process.name, actor.user.name, dst_endpoint.ip, dst_endpoint.port)
+    [class_uid=1001 activity_id=1 file.path=/\.js$/i file.hashes.value!=""]
+    [class_uid=1007 activity_id=1 process.name="wscript.exe" process.cmd_line CONTAINS ".js"]
+    [class_uid=4001 actor.process.name="wscript.exe" dst_endpoint.port=443 dst_endpoint.ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/]
+    [class_uid=1007 activity_id=1 process.name="powershell.exe" actor.process.name="wscript.exe"]
+| risk score=95 entity=device.hostname factor="Drive-by JavaScript execution chain"
+| table time, device.hostname, step1_actor_user_name, step1_file_path, step1_file_hashes_value, step2_process_name, step2_process_cmd_line, step3_dst_endpoint_ip, step3_dst_endpoint_port, step4_process_name, step4_actor_process_name, step4_process_cmd_line, sequence_duration_seconds, risk_score, risk_factors

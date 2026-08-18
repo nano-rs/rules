@@ -1,0 +1,43 @@
+---
+title: rare_process_network_connection
+description: Detects processes with low prevalence (rarely seen across the environment) making network connections. Rare executables with network activity are often indicators of malware, backdoors, or unauthorized tools.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+  - TA0011
+mitre_techniques:
+  - T1059
+  - T1071
+tags:
+  - prevalence
+  - network
+  - malware
+  - c2
+ai_triage_hints:
+  ignore_when:
+    - "Process is a newly deployed internal tool (check with IT)"
+    - "Executable is signed by a trusted vendor"
+    - "Network destination is a known CDN or software update server"
+  suspicious_when:
+    - "Process hash has zero prevalence (never seen before)"
+    - "Connection is to a non-standard port"
+    - "Destination IP is in a hosting provider range"
+    - "Process was recently dropped to disk (check file creation time)"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=4001 AND dst_endpoint.port > 0
+| prevalence enrich=true window=30d
+| where host_count < 10
+| where dst_endpoint.ip != /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| risk score=50 entity=device.hostname factor="Rare process with network"
+| where host_count < 5
+| risk score=75 factor="Very rare hash"
+| where dst_endpoint.port NOT IN (80, 443, 53)
+| risk score=85 factor="Non-standard port"
+| table time, device.hostname, actor.process.name, actor.process.file.path, actor.process.file.hashes.value, dst_endpoint.ip, dst_endpoint.port, risk_score, unmapped.risk_factors

@@ -1,0 +1,32 @@
+---
+title: network_share_enumeration
+description: Detects enumeration of network shares across multiple hosts.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1135
+tags:
+  - network_shares
+  - smb
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT admin auditing share permissions"
+    - "Backup software discovering shares"
+  suspicious_when:
+    - "Enumerating shares on many hosts rapidly"
+    - "Non-admin user discovering shares"
+---
+class_uid=1007 activity_id=1
+| where (process.name="net.exe" AND process.cmd_line CONTAINS "view") OR (process.name="net.exe" AND process.cmd_line CONTAINS "share") OR process.cmd_line CONTAINS "Get-SmbShare"
+| risk score=40 entity=device.hostname factor="Share enumeration"
+| where process.cmd_line CONTAINS "\\*" OR process.cmd_line CONTAINS "/domain"
+| risk score=65 factor="Domain-wide share enumeration"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

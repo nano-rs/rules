@@ -1,0 +1,37 @@
+---
+title: suspicious_ldap_enumeration
+description: Detects excessive LDAP queries indicative of Active Directory reconnaissance tools.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1087.002
+  - T1069.001
+tags:
+  - ldap
+  - enumeration
+  - active_directory
+ai_triage_hints:
+  ignore_when:
+    - "Known directory sync tool (Azure AD Connect)"
+    - "Enterprise application performing LDAP lookups"
+  suspicious_when:
+    - "High volume of LDAP queries from single host"
+    - "Queries targeting sensitive groups or attributes"
+---
+class_uid=4001
+| where dst_endpoint.port IN (389, 636, 3268, 3269)
+| stats count, min(time) as time by device.hostname, actor.user.name
+| where count > 100
+| risk score=55 entity=device.hostname factor="High-volume LDAP queries"
+| where count > 500
+| risk score=75 factor="Excessive LDAP enumeration"
+| where count > 1000
+| risk score=90 factor="Likely AD enumeration tool"
+| table time, device.hostname, actor.user.name, count, risk_score, risk_factors

@@ -1,0 +1,33 @@
+---
+title: browser_exploitation_indicators
+description: Detects browser processes spawning suspicious child processes that may indicate drive-by compromise.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0001
+mitre_techniques:
+  - T1189
+tags:
+  - drive_by
+  - browser
+  - exploit
+ai_triage_hints:
+  ignore_when:
+    - "Browser extension or plugin"
+    - "Known browser helper process"
+  suspicious_when:
+    - "Browser spawns cmd, powershell, or wscript"
+    - "Browser creates executable files"
+---
+metadata.log_source IN ("endpoint_edr", "windows_sysmon") class_uid=1007 activity_id=1
+| where actor.process.name IN ("chrome.exe", "firefox.exe", "msedge.exe", "iexplore.exe", "brave.exe")
+| where process.name IN ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "rundll32.exe", "regsvr32.exe", "mshta.exe")
+| risk score=85 entity=device.hostname factor="Browser spawned shell"
+| where process.name="powershell.exe" AND process.cmd_line CONTAINS "-enc"
+| risk score=95 factor="Browser spawned encoded PowerShell"
+| table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, risk_factors

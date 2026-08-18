@@ -1,0 +1,33 @@
+---
+title: email_collection_via_powershell
+description: Detects PowerShell or scripts accessing mailbox data for email collection.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0009
+mitre_techniques:
+  - T1114.001
+tags:
+  - email
+  - collection
+  - powershell
+ai_triage_hints:
+  ignore_when:
+    - "Known email migration or backup tool"
+    - "IT admin performing mailbox export"
+  suspicious_when:
+    - "PowerShell accessing Outlook COM objects"
+    - "Large PST files being created"
+---
+class_uid=1007 activity_id=1
+| where process.name="powershell.exe" OR process.name="pwsh.exe"
+| where process.cmd_line CONTAINS "Outlook.Application" OR process.cmd_line CONTAINS "New-PST" OR process.cmd_line CONTAINS "Export-Mailbox" OR process.cmd_line CONTAINS ".ost" OR process.cmd_line CONTAINS ".pst"
+| risk score=75 entity=device.hostname factor="Email collection detected"
+| where process.cmd_line CONTAINS "GetFolder" OR process.cmd_line CONTAINS "Items"
+| risk score=85 factor="Mailbox enumeration"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

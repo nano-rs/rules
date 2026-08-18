@@ -1,0 +1,30 @@
+---
+title: ransom_note_file_creation
+description: Detects creation of ransom note files commonly dropped by ransomware.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0040
+mitre_techniques:
+  - T1486
+tags:
+  - ransomware
+  - ransom_note
+  - critical
+ai_triage_hints:
+  ignore_when:
+    - "File is part of security training material"
+  suspicious_when:
+    - "Note created alongside file encryption"
+    - "Note found in multiple directories"
+---
+class_uid=1001
+| where activity_id=1
+| where file.path CONTAINS "README_RESTORE" OR file.path CONTAINS "HOW_TO_DECRYPT" OR file.path CONTAINS "RECOVER_FILES" OR file.path CONTAINS "ransom" OR file.path CONTAINS "DECRYPT_INSTRUCTIONS"
+| risk score=95 entity=device.hostname factor="Ransom note detected"
+| table time, device.hostname, actor.user.name, actor.process.name, file.path, risk_score, risk_factors

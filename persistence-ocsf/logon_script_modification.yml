@@ -1,0 +1,33 @@
+---
+title: user_logon_script_modification
+description: Detects modification of user logon scripts in Active Directory or local policy.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1037.001
+tags:
+  - logon_script
+  - active_directory
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT admin updating login scripts through change management"
+    - "GPO update deploying new logon script"
+  suspicious_when:
+    - "Script modified by non-admin account"
+    - "Script contains download or execution commands"
+---
+metadata.log_source="windows_security" OR metadata.log_source="auth_logs"
+| where metadata.event_code IN ("5136", "5137", "5141") OR class_uid=201001 OR class_uid=201002 OR class_uid=1001
+| where message CONTAINS "ScriptPath" OR reg_key.path CONTAINS "\\UserInitMprLogonScript" OR reg_value.path CONTAINS "\\UserInitMprLogonScript" OR file.path CONTAINS "\\NETLOGON\\"
+| risk score=70 entity=device.hostname factor="Logon script modified"
+| where reg_value.data CONTAINS "powershell" OR reg_value.data CONTAINS ".ps1" OR reg_value.data CONTAINS "http"
+| risk score=90 factor="Suspicious script content"
+| table time, device.hostname, actor.user.name, file.path, reg_key.path, reg_value.path, reg_value.data, risk_score, unmapped.risk_factors

@@ -1,0 +1,34 @@
+---
+title: screen_capture_activity
+description: Detects screen capture utilities or screenshot APIs being used by unexpected processes.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0009
+mitre_techniques:
+  - T1113
+tags:
+  - screenshot
+  - collection
+  - cross_platform
+ai_triage_hints:
+  ignore_when:
+    - "Known screenshot or collaboration tool"
+    - "Snipping tool or Greenshot"
+  suspicious_when:
+    - "Unknown process taking screenshots"
+    - "Repeated screenshot activity"
+---
+class_uid=1007 activity_id=1
+| where process.cmd_line CONTAINS "screenshot" OR process.cmd_line CONTAINS "CopyFromScreen" OR process.cmd_line CONTAINS "BitBlt" OR process.cmd_line CONTAINS "[System.Windows.Forms.Screen]"
+| prevalence enrich=true window=30d
+| where host_count < 10
+| risk score=50 entity=device.hostname factor="Screen capture activity"
+| where host_count < 3
+| risk score=80 factor="Rare screenshot process"
+| table time, device.hostname, actor.user.name, process.name, process.file.hashes.value, host_count, risk_score, risk_factors

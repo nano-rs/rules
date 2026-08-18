@@ -1,0 +1,34 @@
+---
+title: uac_bypass_attempt
+description: Detects known UAC bypass techniques including auto-elevating COM objects and fodhelper abuse.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0004
+mitre_techniques:
+  - T1548.002
+tags:
+  - uac
+  - bypass
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Elevation is from a signed installer"
+    - "IT admin performing authorized elevation"
+  suspicious_when:
+    - "Auto-elevating COM object spawns shell"
+    - "fodhelper or computerdefaults used for bypass"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where (process.name="fodhelper.exe" OR process.name="computerdefaults.exe" OR process.name="sdclt.exe" OR process.name="eventvwr.exe")
+| where actor.process.name NOT IN ("explorer.exe", "svchost.exe")
+| risk score=80 entity=device.hostname factor="Potential UAC bypass"
+| where actor.process.name IN ("cmd.exe", "powershell.exe", "pwsh.exe")
+| risk score=90 factor="Shell-initiated UAC bypass"
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors

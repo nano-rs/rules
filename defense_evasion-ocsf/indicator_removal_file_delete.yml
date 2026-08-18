@@ -1,0 +1,32 @@
+---
+title: mass_file_deletion_evidence_removal
+description: Detects mass deletion of files that may indicate evidence destruction or ransomware pre-encryption behavior.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1070.004
+tags:
+  - file_deletion
+  - anti_forensics
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Scheduled cleanup or disk space maintenance"
+    - "Temp file cleanup by legitimate process"
+  suspicious_when:
+    - "Deleting files with security tool extensions (.evtx, .log)"
+    - "Mass deletion followed by other suspicious activity"
+---
+class_uid=1001 activity_id=4
+| where file.path CONTAINS ".evtx" OR file.path CONTAINS ".log" OR file.path CONTAINS ".pcap" OR file.path CONTAINS "Prefetch"
+| risk score=70 entity=device.hostname factor="Forensic artifact deletion"
+| where actor.process.name IN ("cmd.exe", "powershell.exe") AND actor.process.cmd_line CONTAINS "del"
+| risk score=80 factor="Shell-based file deletion"
+| table time, device.hostname, actor.user.name, actor.process.name, file.path, actor.process.cmd_line, risk_score, risk_factors

@@ -1,0 +1,38 @@
+---
+title: certutil_file_download
+description: Detects certutil.exe being used to download files from the internet, a common LOLBin technique.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+  - TA0011
+mitre_techniques:
+  - T1105
+  - T1140
+tags:
+  - certutil
+  - lolbin
+  - download
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "certutil is verifying or managing certificates"
+    - "Download is from internal PKI infrastructure"
+  suspicious_when:
+    - "URL points to external hosting or paste site"
+    - "Downloaded file has executable extension"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="certutil.exe"
+| where process.cmd_line CONTAINS "-urlcache" OR process.cmd_line CONTAINS "-verifyctl" OR process.cmd_line CONTAINS "url"
+| where process.cmd_line CONTAINS "http"
+| risk score=80 entity=device.hostname factor="Certutil file download"
+| where process.cmd_line CONTAINS ".exe" OR process.cmd_line CONTAINS ".dll" OR process.cmd_line CONTAINS ".ps1"
+| risk score=90 factor="Executable download"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors

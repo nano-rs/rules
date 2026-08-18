@@ -1,0 +1,35 @@
+---
+title: psexec_remote_execution
+description: Detects PsExec or similar remote execution tools creating services on target hosts.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0008
+  - TA0002
+mitre_techniques:
+  - T1021.002
+  - T1569.002
+tags:
+  - psexec
+  - remote_execution
+  - smb
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT admin using PsExec for remote management"
+    - "Known deployment tool using PSEXESVC"
+  suspicious_when:
+    - "PsExec to sensitive server or DC"
+    - "Execution of suspicious commands remotely"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="windows_event"
+| where process.name="psexec.exe" OR process.name="psexesvc.exe" OR process.cmd_line CONTAINS "PSEXESVC" OR process.cmd_line CONTAINS "\\\\*\\admin$"
+| risk score=65 entity=device.hostname factor="PsExec activity"
+| where process.cmd_line CONTAINS "powershell" OR process.cmd_line CONTAINS "cmd /c"
+| risk score=80 factor="Remote shell via PsExec"
+| table time, device.hostname, actor.user.name, dst_endpoint.hostname, process.name, process.cmd_line, risk_score, risk_factors

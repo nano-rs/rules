@@ -1,0 +1,35 @@
+---
+title: audio_recording_detection
+description: Detects processes accessing audio recording capabilities, potentially for surveillance.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0009
+mitre_techniques:
+  - T1123
+tags:
+  - audio
+  - surveillance
+  - collection
+ai_triage_hints:
+  ignore_when:
+    - "Known conferencing app (Teams, Zoom, Webex)"
+    - "Audio editing or recording application"
+  suspicious_when:
+    - "Unknown process accessing microphone"
+    - "Audio capture by scripting engine"
+---
+class_uid=1007 activity_id=1
+| where process.cmd_line CONTAINS "AudioRecord" OR process.cmd_line CONTAINS "microphone" OR process.cmd_line CONTAINS "waveIn" OR process.cmd_line CONTAINS "SoundRecorder"
+| where process.name NOT IN ("teams.exe", "zoom.exe", "webex.exe", "slack.exe", "chrome.exe", "msedge.exe")
+| prevalence enrich=true window=30d
+| where host_count < 10
+| risk score=60 entity=device.hostname factor="Audio capture detected"
+| where host_count < 3
+| risk score=85 factor="Rare audio capture process"
+| table time, device.hostname, actor.user.name, process.name, process.file.hashes.value, host_count, risk_score, risk_factors

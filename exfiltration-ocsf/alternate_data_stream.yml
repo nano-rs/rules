@@ -1,0 +1,34 @@
+---
+title: alternate_data_stream_exfiltration
+description: Detects use of NTFS Alternate Data Streams to hide data before exfiltration.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1564.004
+tags:
+  - ads
+  - ntfs
+  - hidden_data
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Known application using ADS for metadata"
+    - "Browser zone identifier ADS"
+  suspicious_when:
+    - "Large data hidden in ADS"
+    - "ADS created by scripting engine"
+---
+class_uid=1007
+| where process.cmd_line CONTAINS ":" AND process.cmd_line CONTAINS ">" AND process.name IN ("cmd.exe", "powershell.exe")
+| where process.cmd_line=/>\s*[a-zA-Z]:\\[^:]*:[^:\\]+/
+| risk score=55 entity=device.hostname factor="ADS creation detected"
+| where process.cmd_line CONTAINS "type" OR process.cmd_line CONTAINS "echo"
+| risk score=70 factor="Data hidden in ADS"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

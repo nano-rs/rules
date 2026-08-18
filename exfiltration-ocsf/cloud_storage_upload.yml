@@ -1,0 +1,36 @@
+---
+title: large_upload_to_cloud_storage
+description: Detects large file uploads to cloud storage services that may indicate data exfiltration.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: network
+mitre_tactics:
+  - TA0010
+mitre_techniques:
+  - T1567.002
+tags:
+  - cloud_storage
+  - exfiltration
+  - network
+ai_triage_hints:
+  ignore_when:
+    - "User uploading to corporate-approved cloud storage"
+    - "Known backup or sync process"
+  suspicious_when:
+    - "Upload to personal cloud storage"
+    - "Large upload outside business hours"
+---
+class_uid=4002
+| where traffic.bytes_out > 10000000
+| where http_request.url.url_string CONTAINS "dropbox.com" OR http_request.url.url_string CONTAINS "drive.google.com" OR http_request.url.url_string CONTAINS "mega.nz" OR http_request.url.url_string CONTAINS "mediafire.com" OR http_request.url.url_string CONTAINS "sendspace.com" OR http_request.url.url_string CONTAINS "wetransfer.com" OR http_request.url.url_string CONTAINS "file.io"
+| eval bytes_out_mb = round(traffic.bytes_out / 1000000, 2)
+| risk score=55 entity=src_endpoint.hostname factor="Large cloud storage upload"
+| where traffic.bytes_out > 50000000
+| risk score=70 factor="Very large upload (>50MB)"
+| where traffic.bytes_out > 200000000
+| risk score=85 factor="Massive upload (>200MB)"
+| table time, src_endpoint.hostname, src_endpoint.ip, actor.user.name, http_request.url.url_string, bytes_out_mb, risk_score, risk_factors

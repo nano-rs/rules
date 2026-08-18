@@ -1,0 +1,31 @@
+---
+title: process_listing_for_security_tools
+description: Detects process listing commands specifically looking for security tools and defensive software.
+author: nano.rs
+severity: low
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1057
+tags:
+  - process_discovery
+  - defense_recon
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Monitoring tool checking process health"
+    - "IT admin troubleshooting"
+  suspicious_when:
+    - "Filtering for AV/EDR process names"
+    - "Combined with other reconnaissance"
+---
+class_uid=1007 activity_id=1
+| where (process.name="tasklist.exe" OR process.name="wmic.exe") AND process.cmd_line CONTAINS "command_line"
+| where process.cmd_line CONTAINS "MsMpEng" OR process.cmd_line CONTAINS "Carbon" OR process.cmd_line CONTAINS "Crowd" OR process.cmd_line CONTAINS "Sentinel" OR process.cmd_line CONTAINS "Cylance"
+| risk score=55 entity=device.hostname factor="Security process discovery"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

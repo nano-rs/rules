@@ -1,0 +1,38 @@
+---
+title: cscript_wscript_suspicious_execution
+description: Detects cscript/wscript executing scripts from suspicious locations or with suspicious arguments.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1059.005
+  - T1059.007
+tags:
+  - wscript
+  - cscript
+  - scripting
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Script is a known login or GPO script"
+    - "Script path is in a managed deployment folder"
+  suspicious_when:
+    - "Script executed from Temp or user profile"
+    - "Script has obfuscated name or random characters"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name IN ("cscript.exe", "wscript.exe")
+| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR process.cmd_line CONTAINS "Downloads"
+| risk score=55 entity=device.hostname factor="Script from suspicious path"
+| where actor.process.name IN ("winword.exe", "excel.exe", "outlook.exe", "powerpnt.exe")
+| risk score=85 factor="Office parent process"
+| where process.cmd_line CONTAINS "//E:jscript" OR process.cmd_line CONTAINS "//E:vbscript"
+| risk score=70 factor="Explicit script engine"
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors

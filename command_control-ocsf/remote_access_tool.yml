@@ -1,0 +1,32 @@
+---
+title: unauthorized_remote_access_tool
+description: Detects execution of remote access tools not approved by the organization.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1219
+tags:
+  - rat
+  - remote_access
+  - c2
+ai_triage_hints:
+  ignore_when:
+    - "IT help desk using approved remote tool"
+    - "User-installed remote support for vendor assistance"
+  suspicious_when:
+    - "RAT installed silently without user interaction"
+    - "Multiple remote tools on same host"
+---
+class_uid=1007
+| where process.name IN ("AnyDesk.exe", "TeamViewer.exe", "ScreenConnect.exe", "RemoteDesktop.exe", "ammyy.exe", "RustDesk.exe", "meshagent.exe") OR process.cmd_line CONTAINS "connectwise" OR process.cmd_line CONTAINS "splashtop"
+| risk score=50 entity=device.hostname factor="Remote access tool detected"
+| where process.file.path CONTAINS "Temp" OR process.file.path CONTAINS "AppData"
+| risk score=75 factor="RAT from suspicious path"
+| table time, device.hostname, actor.user.name, process.name, process.file.path, process.cmd_line, risk_score, risk_factors

@@ -1,0 +1,32 @@
+---
+title: protocol_tunneling_detection
+description: Detects tunneling tools that encapsulate traffic within allowed protocols (HTTP, DNS, ICMP).
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1572
+tags:
+  - tunneling
+  - c2
+  - evasion
+ai_triage_hints:
+  ignore_when:
+    - "Known VPN or approved tunneling tool"
+    - "IT-managed remote access solution"
+  suspicious_when:
+    - "Unknown tunneling tool detected"
+    - "Tunneling to external IP"
+---
+class_uid=1007
+| where process.cmd_line CONTAINS "chisel" OR process.cmd_line CONTAINS "ngrok" OR process.cmd_line CONTAINS "plink" OR process.cmd_line CONTAINS "proxychains" OR process.cmd_line CONTAINS "socat" OR process.cmd_line CONTAINS "iodine" OR process.cmd_line CONTAINS "dnscat"
+| risk score=80 entity=device.hostname factor="Tunneling tool detected"
+| where process.cmd_line CONTAINS "http" OR process.cmd_line CONTAINS "socks"
+| risk score=85 factor="Active tunnel configuration"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

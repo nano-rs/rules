@@ -1,0 +1,33 @@
+---
+title: sam_registry_hive_dump
+description: Detects dumping of SAM, SYSTEM, or SECURITY registry hives for offline credential extraction.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1003.002
+tags:
+  - sam
+  - registry
+  - credential_dumping
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Authorized forensic investigation"
+    - "Backup tool saving registry"
+  suspicious_when:
+    - "SAM and SYSTEM hives saved together"
+    - "Exported to user-writable directory"
+---
+metadata.log_source IN ("windows_sysmon", "endpoint_edr") class_uid=1007 activity_id=1
+| where (process.name="reg.exe" AND process.cmd_line CONTAINS "save" AND (process.cmd_line CONTAINS "sam" OR process.cmd_line CONTAINS "system" OR process.cmd_line CONTAINS "security"))
+| risk score=80 entity=device.hostname factor="Registry hive dump"
+| where process.cmd_line CONTAINS "sam" AND process.cmd_line CONTAINS "system"
+| risk score=95 factor="SAM+SYSTEM dump"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

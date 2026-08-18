@@ -1,0 +1,38 @@
+---
+title: encrypted_traffic_non_standard_port
+description: Detects TLS/SSL traffic on non-standard ports which may indicate covert C2 channels.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: network
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1573.002
+tags:
+  - encrypted
+  - non_standard_port
+  - c2
+  - network
+ai_triage_hints:
+  ignore_when:
+    - "Known application using non-standard TLS port"
+    - "Internal service on custom port"
+  suspicious_when:
+    - "TLS to external IP on high port"
+    - "Connection to low-prevalence IP"
+---
+class_uid=4001
+| where connection_info.protocol_num=6
+| where dst_endpoint.port NOT IN (80, 22, 25, 88, 135, 139, 445, 3389)
+| where dst_endpoint.ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| risk score=50 entity=src_endpoint.hostname factor="TCP session on non-standard port"
+| prevalence enrich=true window=30d
+| where host_count < 5
+| risk score=70 factor="Rare destination"
+| where host_count < 2
+| risk score=85 factor="Unique covert channel"
+| table time, src_endpoint.hostname, src_endpoint.ip, dst_endpoint.ip, dst_endpoint.port, host_count, risk_score, risk_factors

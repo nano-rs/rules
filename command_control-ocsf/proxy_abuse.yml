@@ -1,0 +1,36 @@
+---
+title: web_proxy_abuse_for_c2
+description: Detects suspicious patterns in web proxy traffic that may indicate C2 communications disguised as web traffic.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: network
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1090.001
+tags:
+  - proxy
+  - c2
+  - network
+ai_triage_hints:
+  ignore_when:
+    - "Known application with frequent API calls"
+    - "CDN or analytics traffic"
+  suspicious_when:
+    - "High frequency to single domain with small payloads"
+    - "POST requests with encoded data"
+---
+class_uid=4002
+| where dst_endpoint.port=443
+| stats count, sum(traffic.bytes_out) as total_out, avg(traffic.bytes_out) as avg_out, min(time) as time by src_endpoint.hostname, dst_endpoint.hostname
+| where count > 50 AND avg_out < 1000
+| prevalence enrich=true window=30d
+| where host_count < 5
+| risk score=60 entity=src_endpoint.hostname factor="Suspicious proxy pattern"
+| where host_count < 2
+| risk score=80 factor="Rare destination with beacon-like traffic"
+| table time, src_endpoint.hostname, dst_endpoint.hostname, count, total_out, avg_out, host_count, risk_score, risk_factors

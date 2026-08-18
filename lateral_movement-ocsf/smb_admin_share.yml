@@ -1,0 +1,37 @@
+---
+title: smb_admin_share_access
+description: Detects access to administrative SMB shares (C$, ADMIN$, IPC$) which may indicate lateral movement.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: network
+mitre_tactics:
+  - TA0008
+mitre_techniques:
+  - T1021.002
+tags:
+  - smb
+  - admin_share
+  - lateral_movement
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT admin accessing remote admin shares"
+    - "Known backup or management tool"
+  suspicious_when:
+    - "Access from workstation to server admin shares"
+    - "First-time admin share access for this user"
+---
+metadata.log_source="windows_event" OR metadata.log_source="windows_sysmon"
+| where metadata.event_code="5140" OR metadata.event_code="5145"
+| where message CONTAINS "C$" OR message CONTAINS "ADMIN$" OR message CONTAINS "IPC$"
+| risk score=45 entity=device.hostname factor="Admin share access"
+| where src_endpoint.hostname CONTAINS "ws" OR src_endpoint.hostname CONTAINS "desktop" OR src_endpoint.hostname CONTAINS "laptop"
+| risk score=65 factor="Workstation accessing admin share"
+| prevalence enrich=true window=30d
+| where host_count < 5
+| risk score=80 factor="Unusual admin share access"
+| table time, device.hostname, src_endpoint.hostname, src_endpoint.ip, user.name, dst_endpoint.hostname, message, host_count, risk_score, risk_factors

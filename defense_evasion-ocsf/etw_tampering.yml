@@ -1,0 +1,31 @@
+---
+title: etw_provider_tampering
+description: Detects attempts to disable or tamper with Event Tracing for Windows (ETW) providers.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0112
+mitre_techniques:
+  - T1685
+tags:
+  - etw
+  - evasion
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "ETW configuration by authorized monitoring tool"
+  suspicious_when:
+    - "Disabling security-related ETW providers"
+    - "Patching ntdll to bypass ETW"
+---
+class_uid=1007 activity_id=1
+| where process.cmd_line CONTAINS "logman" AND (process.cmd_line CONTAINS "stop" OR process.cmd_line CONTAINS "delete") AND process.cmd_line CONTAINS "trace"
+| risk score=80 entity=device.hostname factor="ETW provider tampering"
+| where process.cmd_line CONTAINS "Microsoft-Windows-Threat-Intelligence"
+| risk score=95 factor="Threat Intelligence ETW disabled"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

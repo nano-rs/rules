@@ -1,0 +1,47 @@
+---
+title: suspicious_powershell_encoded_execution
+description: Detects PowerShell execution with suspicious command-line patterns including encoded commands, download cradles, AMSI bypass attempts, and execution policy bypasses.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+  - TA0005
+  - TA0112
+mitre_techniques:
+  - T1059.001
+  - T1027
+  - T1685
+tags:
+  - powershell
+  - obfuscation
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Command is from SCCM, Intune, or other management tools"
+    - "Script is a known IT automation (check hash against approved scripts)"
+    - "User is a developer running build scripts"
+  suspicious_when:
+    - "Multiple obfuscation techniques in single command"
+    - "Parent process is Office application or browser"
+    - "Command downloads and executes in memory (fileless)"
+    - "AMSI bypass detected alongside other suspicious patterns"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="powershell.exe" OR process.name="pwsh.exe"
+| where process.cmd_line=/-e(nc(odedcommand)?)?\s/i OR process.cmd_line CONTAINS "IEX" OR process.cmd_line CONTAINS "Invoke-Expression" OR process.cmd_line CONTAINS "downloadstring"
+| risk score=50 entity=device.hostname factor="Suspicious PowerShell"
+| where process.cmd_line CONTAINS "-enc"
+| risk score=70 factor="Encoded command"
+| where process.cmd_line CONTAINS "IEX" OR process.cmd_line CONTAINS "Invoke-Expression"
+| risk score=85 factor="Download cradle"
+| where process.cmd_line CONTAINS "amsi"
+| risk score=95 factor="AMSI bypass attempt"
+| where actor.process.name IN ("winword.exe", "excel.exe", "outlook.exe")
+| risk score=95 factor="Office parent process"
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors

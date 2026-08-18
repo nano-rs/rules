@@ -1,0 +1,39 @@
+---
+title: unsigned_kernel_driver_load
+description: Detects loading of unsigned or rarely seen kernel drivers which may indicate privilege escalation or rootkit installation.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0004
+mitre_techniques:
+  - T1068
+tags:
+  - driver
+  - kernel
+  - rootkit
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Driver is from known hardware vendor update"
+    - "Driver is signed by Microsoft or WHQL"
+  suspicious_when:
+    - "Driver has no digital signature"
+    - "Driver loaded from temp or user directory"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1005 AND (metadata.event_code="6" OR module.file.path CONTAINS ".sys")
+| prevalence enrich=true window=30d
+| where host_count < 10
+| risk score=70 entity=device.hostname factor="Rare kernel driver"
+| where host_count < 3
+| risk score=90 factor="Very rare driver"
+| where module.file.signatures.state != "Valid"
+| risk score=92 factor="Driver signature not valid"
+| where module.file.path CONTAINS "Temp" OR module.file.path CONTAINS "AppData" OR module.file.path CONTAINS "Downloads"
+| risk score=95 factor="Driver from suspicious path"
+| table time, device.hostname, module.file.name, module.file.path, module.file.signatures.state, risk_score, unmapped.risk_factors

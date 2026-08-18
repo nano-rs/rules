@@ -1,0 +1,36 @@
+---
+title: cloud_api_excessive_enumeration
+description: Detects excessive cloud API calls for listing and describing resources, indicative of cloud reconnaissance.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: cloud
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1580
+  - T1526
+tags:
+  - cloud
+  - aws
+  - azure
+  - enumeration
+ai_triage_hints:
+  ignore_when:
+    - "Known cloud management or inventory tool"
+    - "Cloud security posture management (CSPM) tool"
+  suspicious_when:
+    - "Many list/describe calls from new identity"
+    - "Calls span multiple services"
+---
+class_uid=6003
+| where api.operation=/^(List|Describe|Get)/i
+| stats count, dc(api.operation) as unique_apis, min(time) as time by actor.user.name, src_endpoint.ip
+| where count > 50 AND unique_apis > 10
+| risk score=55 entity=actor.user.name factor="Cloud API enumeration"
+| where unique_apis > 30
+| risk score=75 factor="Extensive cloud recon"
+| table time, actor.user.name, src_endpoint.ip, count, unique_apis, risk_score, risk_factors

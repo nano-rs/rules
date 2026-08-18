@@ -1,0 +1,33 @@
+---
+title: wmi_event_subscription_persistence
+description: Detects WMI event subscription creation used for fileless persistence.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1546.003
+tags:
+  - wmi
+  - persistence
+  - fileless
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "WMI subscription is from known management tool"
+  suspicious_when:
+    - "CommandLineEventConsumer executes scripts"
+    - "Subscription trigger is system startup or logon"
+---
+metadata.log_source="windows_sysmon"
+| where metadata.event_code IN ("19", "20", "21") OR process.name="wmic.exe"
+| where process.cmd_line CONTAINS "CommandLineEventConsumer" OR process.cmd_line CONTAINS "__EventFilter" OR process.cmd_line CONTAINS "ActiveScriptEventConsumer" OR message CONTAINS "CommandLineEventConsumer" OR message CONTAINS "__EventFilter" OR message CONTAINS "ActiveScriptEventConsumer"
+| risk score=80 entity=device.hostname factor="WMI event subscription"
+| where process.cmd_line CONTAINS "powershell" OR process.cmd_line CONTAINS "cmd.exe" OR message CONTAINS "powershell" OR message CONTAINS "cmd.exe"
+| risk score=90 factor="Shell in WMI consumer"
+| table time, device.hostname, actor.user.name, process.cmd_line, metadata.event_code, risk_score, unmapped.risk_factors

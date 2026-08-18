@@ -1,0 +1,33 @@
+---
+title: local_account_enumeration
+description: Detects enumeration of local accounts and groups using net commands.
+author: nano.rs
+severity: low
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1087.001
+tags:
+  - account_enumeration
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT admin performing user management"
+    - "Automated inventory script"
+  suspicious_when:
+    - "Multiple enumeration commands in sequence"
+    - "Performed by non-admin user"
+---
+class_uid=1007 activity_id=1
+| where process.name="net.exe" OR process.name="net1.exe"
+| where process.cmd_line CONTAINS "user" OR process.cmd_line CONTAINS "localgroup" OR process.cmd_line CONTAINS "group"
+| where process.cmd_line NOT CONTAINS "/add" AND process.cmd_line NOT CONTAINS "/delete"
+| risk score=35 entity=device.hostname factor="Account enumeration"
+| where process.cmd_line CONTAINS "domain"
+| risk score=55 factor="Domain account enumeration"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

@@ -1,0 +1,32 @@
+---
+title: database_credential_dump
+description: Detects database export utilities that may indicate data collection for exfiltration.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0009
+mitre_techniques:
+  - T1005
+tags:
+  - database
+  - collection
+  - cross_platform
+ai_triage_hints:
+  ignore_when:
+    - "Scheduled backup process"
+    - "DBA performing authorized export"
+  suspicious_when:
+    - "Database dump to non-standard location"
+    - "Export by non-DBA user"
+---
+class_uid=1007 activity_id=1
+| where process.name IN ("mysqldump", "pg_dump", "sqlcmd.exe", "bcp.exe", "mongodump")
+| risk score=50 entity=device.hostname factor="Database dump detected"
+| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "Downloads" OR process.cmd_line CONTAINS "/tmp"
+| risk score=75 factor="Dump to suspicious path"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

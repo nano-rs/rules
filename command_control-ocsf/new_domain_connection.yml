@@ -1,0 +1,44 @@
+---
+title: connection_to_newly_seen_domain
+description: Detects network connections to domains that were first seen in the environment within the last 24 hours AND have low prevalence. New domains with few hosts connecting to them are strong indicators of C2 infrastructure, phishing, or malicious downloads.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 1h
+folder: network
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1071.001
+  - T1102
+tags:
+  - prevalence
+  - new_domain
+  - command_control
+  - network
+ai_triage_hints:
+  ignore_when:
+    - "Domain is from a major CDN or cloud provider"
+    - "Domain matches a recently onboarded SaaS application"
+    - "Connection is from IT testing new services"
+  suspicious_when:
+    - "Domain was registered recently (check WHOIS)"
+    - "Domain uses dynamic DNS provider"
+    - "Connection occurs outside business hours"
+    - "Large data transfer to the domain"
+    - "Domain name looks like DGA (random characters)"
+---
+class_uid=4001 OR class_uid=4002 OR class_uid=4003
+| where dst_endpoint.hostname != "" AND dst_endpoint.hostname LIKE "%.%"
+| prevalence enrich=true window=30d
+| where host_count < 10 AND prevalence_first_seen > now() - INTERVAL 24 HOUR
+| risk score=70 entity=src_endpoint.hostname factor="Connection to newly seen domain"
+| where host_count < 5
+| risk score=80 factor="Very rare domain"
+| where host_count < 3
+| risk score=90 factor="Extremely rare domain"
+| where dst_endpoint.hostname=/(^[a-z0-9]{12,}\.)|(\d{3,})/i
+| risk score=95 factor="Possible DGA domain"
+| table time, src_endpoint.hostname, src_endpoint.ip, actor.user.name, dst_endpoint.hostname, dst_endpoint.ip, dst_endpoint.port, host_count, prevalence_first_seen, is_rare, http_request.url.url_string, risk_score, risk_factors

@@ -1,0 +1,31 @@
+---
+title: reverse_shell_connection
+description: Detects patterns consistent with reverse shell connections including stdin/stdout redirection over network.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1059
+tags:
+  - reverse_shell
+  - c2
+  - cross_platform
+ai_triage_hints:
+  ignore_when:
+    - "Authorized remote management tool"
+  suspicious_when:
+    - "Shell with network redirection"
+    - "Netcat or socat with shell command"
+---
+class_uid=1007
+| where process.cmd_line CONTAINS "nc -e" OR process.cmd_line CONTAINS "ncat -e" OR process.cmd_line CONTAINS "/dev/tcp/" OR process.cmd_line CONTAINS "bash -i" OR process.cmd_line CONTAINS "mkfifo" OR process.cmd_line CONTAINS "socket" AND process.cmd_line CONTAINS "subprocess"
+| risk score=90 entity=device.hostname factor="Reverse shell detected"
+| where process.cmd_line CONTAINS "/dev/tcp/"
+| risk score=95 factor="Bash reverse shell"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

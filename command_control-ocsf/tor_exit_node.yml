@@ -1,0 +1,32 @@
+---
+title: connection_to_tor_network
+description: Detects connections to known Tor entry/exit nodes or Tor browser usage.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: network
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1090.003
+tags:
+  - tor
+  - anonymization
+  - network
+ai_triage_hints:
+  ignore_when:
+    - "Authorized security research"
+    - "Known Tor relay operation"
+  suspicious_when:
+    - "Tor from production server"
+    - "Combined with other suspicious activity"
+---
+class_uid=4001 OR class_uid=4002
+| where dst_endpoint.port=9001 OR dst_endpoint.port=9030 OR http_request.url.url_string CONTAINS ".onion" OR dst_endpoint.hostname CONTAINS ".onion" OR dst_endpoint.hostname CONTAINS "torproject.org"
+| risk score=75 entity=src_endpoint.hostname factor="Tor network connection"
+| where src_endpoint.hostname CONTAINS "srv" OR src_endpoint.hostname CONTAINS "server"
+| risk score=90 factor="Server connecting to Tor"
+| table time, src_endpoint.hostname, src_endpoint.ip, actor.user.name, dst_endpoint.ip, dst_endpoint.port, dst_endpoint.hostname, risk_score, risk_factors

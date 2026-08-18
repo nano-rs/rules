@@ -1,0 +1,44 @@
+---
+title: workstation_to_dc_lateral_movement
+description: Detects lateral movement patterns where a user authenticates to multiple systems in sequence, progressing from workstations to servers to domain controllers. This pattern is characteristic of attackers moving through a network after initial compromise.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 2h
+folder: identity
+mitre_tactics:
+  - TA0008
+mitre_techniques:
+  - T1021
+  - T1021.001
+  - T1021.002
+  - T1021.006
+tags:
+  - lateral_movement
+  - sequence
+  - active_directory
+ai_triage_hints:
+  ignore_when:
+    - "User is IT admin performing routine maintenance"
+    - "Activity matches known change management window"
+    - "User is running automated deployment scripts"
+  suspicious_when:
+    - "User doesn't normally access servers or domain controllers"
+    - "Movement occurs outside business hours"
+    - "Authentication uses pass-the-hash or Kerberos anomalies"
+    - "Time between hops is very short (automated tool)"
+---
+class_uid=3002 activity_id=1 status="Success"
+| sequence by user.name maxspan=1h
+    fields(src_endpoint.ip, dst_endpoint.hostname, auth_protocol)
+    [dst_endpoint.hostname=/^ws/i OR dst_endpoint.hostname=/^wks/i OR dst_endpoint.hostname=/^workstation/i OR dst_endpoint.hostname=/^desktop/i OR dst_endpoint.hostname=/^laptop/i OR dst_endpoint.hostname=/^lt/i]
+    [dst_endpoint.hostname=/^srv/i OR dst_endpoint.hostname=/^server/i OR dst_endpoint.hostname=/^app/i OR dst_endpoint.hostname=/^web/i OR dst_endpoint.hostname=/^db/i]
+    [dst_endpoint.hostname=/^dc/i OR dst_endpoint.hostname=/^domain/i OR dst_endpoint.hostname=/^ad/i OR dst_endpoint.hostname=/^pdc/i OR dst_endpoint.hostname=/^bdc/i]
+| risk score=80 entity=user.name factor="Workstation to DC progression"
+| where sequence_duration_seconds < 300
+| risk score=90 factor="Rapid lateral movement"
+| where step3_auth_protocol = "NTLM"
+| risk score=95 factor="NTLM authentication"
+| table user.name, step1_src_endpoint_ip, step1_dst_endpoint_hostname, step2_dst_endpoint_hostname, step3_dst_endpoint_hostname, step3_auth_protocol, sequence_duration_seconds, risk_score, risk_factors

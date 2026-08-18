@@ -1,0 +1,34 @@
+---
+title: clipboard_data_capture
+description: Detects processes accessing clipboard data, potentially for credential or sensitive data capture.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0009
+mitre_techniques:
+  - T1115
+tags:
+  - clipboard
+  - collection
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Clipboard manager or password manager"
+    - "RDP or remote access tool clipboard sync"
+  suspicious_when:
+    - "Unknown process accessing clipboard repeatedly"
+    - "Process has low prevalence"
+---
+class_uid=1007 activity_id=1
+| where process.cmd_line CONTAINS "GetClipboardData" OR process.cmd_line CONTAINS "Get-Clipboard" OR process.cmd_line CONTAINS "clip.exe"
+| prevalence enrich=true window=30d
+| where host_count < 10
+| risk score=50 entity=device.hostname factor="Clipboard access"
+| where host_count < 3
+| risk score=75 factor="Rare clipboard accessor"
+| table time, device.hostname, actor.user.name, process.name, process.file.hashes.value, host_count, risk_score, risk_factors

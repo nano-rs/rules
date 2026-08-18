@@ -1,0 +1,31 @@
+---
+title: steganography_tool_usage
+description: Detects execution of known steganography tools that hide data within images or files.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1027.003
+tags:
+  - steganography
+  - covert
+  - exfiltration
+ai_triage_hints:
+  ignore_when:
+    - "Known CTF or security research activity"
+  suspicious_when:
+    - "Tool used with image files and data together"
+    - "Followed by file upload or email"
+---
+class_uid=1007
+| where process.cmd_line CONTAINS "steghide" OR process.cmd_line CONTAINS "openstego" OR process.cmd_line CONTAINS "snow.exe" OR process.cmd_line CONTAINS "invisible secrets" OR process.cmd_line CONTAINS "Invoke-PSImage"
+| risk score=70 entity=device.hostname factor="Steganography tool detected"
+| where process.cmd_line CONTAINS "embed"
+| risk score=85 factor="Data embedding operation"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

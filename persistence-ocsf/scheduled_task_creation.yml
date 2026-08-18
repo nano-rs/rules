@@ -1,0 +1,42 @@
+---
+title: suspicious_scheduled_task_creation
+description: Detects creation of scheduled tasks with suspicious characteristics such as execution from temp directories, encoded PowerShell, or tasks created by unusual parent processes.
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+  - TA0002
+mitre_techniques:
+  - T1053.005
+tags:
+  - persistence
+  - scheduled_task
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Task is created by SCCM, GPO, or enterprise management"
+    - "Task name matches known software update patterns"
+    - "Created by signed Microsoft or vendor binary"
+  suspicious_when:
+    - "Task runs executable from temp or user-writable directory"
+    - "Task name is random or obfuscated"
+    - "Parent process is scripting engine or Office app"
+    - "Task triggers on system events rather than schedule"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security"
+| where metadata.event_code="4698" OR process.name="schtasks.exe"
+| risk score=45 entity=device.hostname factor="Scheduled task created"
+| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR message CONTAINS "Temp" OR message CONTAINS "AppData"
+| risk score=70 factor="Suspicious execution path"
+| where process.cmd_line CONTAINS "-enc" OR message CONTAINS "-enc"
+| risk score=85 factor="Encoded command in task"
+| where actor.process.name IN ("wscript.exe", "cscript.exe", "mshta.exe")
+| risk score=80 factor="Script engine parent"
+| where actor.process.name IN ("winword.exe", "excel.exe", "powerpnt.exe")
+| risk score=90 factor="Office app parent"
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors

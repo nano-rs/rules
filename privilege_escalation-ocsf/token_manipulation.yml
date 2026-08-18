@@ -1,0 +1,33 @@
+---
+title: access_token_manipulation
+description: Detects processes attempting to manipulate access tokens for privilege escalation.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0004
+mitre_techniques:
+  - T1134
+tags:
+  - token
+  - privilege_escalation
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Process is a known security tool or EDR"
+    - "Token impersonation by IIS or SQL Server"
+  suspicious_when:
+    - "Non-admin process manipulating tokens"
+    - "Token from SYSTEM or Domain Admin"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND (activity_id=1 OR activity_id=3)
+| where (process.cmd_line CONTAINS "token" OR actor.process.cmd_line CONTAINS "token") AND (process.cmd_line CONTAINS "duplicate" OR process.cmd_line CONTAINS "impersonate" OR process.cmd_line CONTAINS "assign" OR actor.process.cmd_line CONTAINS "duplicate" OR actor.process.cmd_line CONTAINS "impersonate" OR actor.process.cmd_line CONTAINS "assign")
+| risk score=70 entity=device.hostname factor="Token manipulation"
+| where actor.process.name NOT IN ("lsass.exe", "csrss.exe", "services.exe", "svchost.exe") AND process.name NOT IN ("lsass.exe", "csrss.exe", "services.exe", "svchost.exe")
+| risk score=85 factor="Unusual token manipulator"
+| table time, device.hostname, actor.user.name, actor.process.name, process.name, actor.process.cmd_line, process.cmd_line, risk_score, unmapped.risk_factors

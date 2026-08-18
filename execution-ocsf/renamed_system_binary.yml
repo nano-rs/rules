@@ -1,0 +1,34 @@
+---
+title: renamed_windows_system_binary
+description: Detects execution of renamed system binaries where the original filename in metadata doesn't match the process name on disk.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1036.003
+tags:
+  - masquerading
+  - renamed_binary
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Software that legitimately renames binaries during install"
+    - "Known developer tool that uses renamed copies"
+  suspicious_when:
+    - "Original name is cmd.exe, powershell.exe, or other system tool"
+    - "File is in a non-standard location"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name IN ("cmd.exe", "powershell.exe", "pwsh.exe", "rundll32.exe", "regsvr32.exe", "mshta.exe", "certutil.exe", "wmic.exe")
+| where process.file.path NOT CONTAINS "System32" AND process.file.path NOT CONTAINS "SysWOW64" AND process.file.path NOT CONTAINS "WindowsPowerShell"
+| risk score=75 entity=device.hostname factor="System binary executing from non-standard path"
+| where process.file.path CONTAINS "Temp" OR process.file.path CONTAINS "AppData" OR process.file.path CONTAINS "Downloads" OR process.file.path CONTAINS "ProgramData"
+| risk score=85 factor="System binary in user-writable path"
+| table time, device.hostname, actor.user.name, process.name, process.file.name, process.file.path, process.cmd_line, risk_score, unmapped.risk_factors

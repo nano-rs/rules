@@ -1,0 +1,32 @@
+---
+title: windows_event_log_cleared
+description: Detects clearing of Windows event logs, often done by attackers to cover their tracks.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0112
+mitre_techniques:
+  - T1685.005
+tags:
+  - log_clearing
+  - anti_forensics
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT admin performing routine log maintenance"
+    - "Automated log rotation policy"
+  suspicious_when:
+    - "Security or System log cleared"
+    - "Cleared by non-admin user"
+---
+metadata.log_source="windows_event" OR metadata.log_source="windows_sysmon"
+| where metadata.event_code="1102" OR metadata.event_code="104" OR (process.name="wevtutil.exe" AND process.cmd_line CONTAINS "cl") OR (process.name="powershell.exe" AND process.cmd_line CONTAINS "Clear-EventLog")
+| risk score=85 entity=device.hostname factor="Event log cleared"
+| where process.cmd_line CONTAINS "Security" OR process.cmd_line CONTAINS "System" OR metadata.log_name="Security" OR metadata.log_name="System"
+| risk score=95 factor="Security log cleared"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, metadata.event_code, metadata.log_name, risk_score, risk_factors

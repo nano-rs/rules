@@ -1,0 +1,34 @@
+---
+title: wmic_remote_process_creation
+description: Detects WMIC being used to create processes on remote systems, a common lateral movement and execution technique.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1047
+tags:
+  - wmic
+  - windows
+  - remote_execution
+ai_triage_hints:
+  ignore_when:
+    - "WMIC call is from SCCM or other management tools"
+    - "User is IT admin performing remote maintenance"
+  suspicious_when:
+    - "Target is a sensitive server or domain controller"
+    - "Process created is scripting engine or shell"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="wmic.exe"
+| where process.cmd_line CONTAINS "/node:" AND process.cmd_line CONTAINS "process" AND process.cmd_line CONTAINS "call" AND process.cmd_line CONTAINS "create"
+| risk score=75 entity=device.hostname factor="Remote WMIC process creation"
+| where process.cmd_line CONTAINS "powershell" OR process.cmd_line CONTAINS "cmd.exe"
+| risk score=90 factor="Shell spawned via WMIC"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors

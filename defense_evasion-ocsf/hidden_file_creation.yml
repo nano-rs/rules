@@ -1,0 +1,32 @@
+---
+title: hidden_file_or_directory_creation
+description: Detects creation of hidden files or directories using attrib or file naming conventions.
+author: nano.rs
+severity: low
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1564.001
+tags:
+  - hidden_files
+  - evasion
+  - cross_platform
+ai_triage_hints:
+  ignore_when:
+    - "Application creating its own configuration files"
+    - "Known backup or sync tool behavior"
+  suspicious_when:
+    - "Hidden executable file created"
+    - "Hidden directory in non-standard location"
+---
+class_uid=1007 activity_id=1
+| where process.name="attrib.exe" AND process.cmd_line CONTAINS "+h"
+| risk score=40 entity=device.hostname factor="Hidden file/directory created"
+| where process.cmd_line CONTAINS ".exe" OR process.cmd_line CONTAINS ".dll" OR process.cmd_line CONTAINS ".ps1"
+| risk score=70 factor="Hidden executable"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

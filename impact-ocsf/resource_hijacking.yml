@@ -1,0 +1,31 @@
+---
+title: cryptomining_resource_hijacking
+description: Detects cryptocurrency mining activity hijacking system resources.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0040
+mitre_techniques:
+  - T1496
+tags:
+  - cryptomining
+  - resource_hijack
+  - cross_platform
+ai_triage_hints:
+  ignore_when:
+    - "Authorized mining operation"
+  suspicious_when:
+    - "Mining on production server"
+    - "High CPU with mining pool connections"
+---
+class_uid=1007
+| where process.cmd_line CONTAINS "stratum" OR process.cmd_line CONTAINS "xmrig" OR process.cmd_line CONTAINS "minerd" OR process.cmd_line CONTAINS "cpuminer" OR process.cmd_line CONTAINS "cryptonight" OR process.cmd_line CONTAINS "pool.minergate"
+| risk score=70 entity=device.hostname factor="Cryptomining detected"
+| where device.hostname CONTAINS "srv" OR device.hostname CONTAINS "server" OR device.hostname CONTAINS "prod"
+| risk score=85 factor="Mining on server"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

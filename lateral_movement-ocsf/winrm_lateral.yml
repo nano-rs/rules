@@ -1,0 +1,35 @@
+---
+title: winrm_remote_execution
+description: Detects Windows Remote Management (WinRM) being used for remote command execution.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0008
+mitre_techniques:
+  - T1021.006
+tags:
+  - winrm
+  - powershell_remoting
+  - lateral_movement
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "PowerShell remoting from known management server"
+    - "IT admin using Enter-PSSession for management"
+  suspicious_when:
+    - "WinRM from workstation to server"
+    - "Remote session executing suspicious commands"
+---
+class_uid=1007 activity_id=1
+| where actor.process.name="wsmprovhost.exe"
+| risk score=50 entity=device.hostname factor="WinRM remote execution"
+| where process.name IN ("cmd.exe", "powershell.exe")
+| risk score=65 factor="Shell via WinRM"
+| where process.cmd_line CONTAINS "-enc" OR process.cmd_line CONTAINS "IEX" OR process.cmd_line CONTAINS "downloadstring"
+| risk score=85 factor="Suspicious WinRM payload"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

@@ -1,0 +1,31 @@
+---
+title: dcsync_replication_attack
+description: Detects DCSync attacks where a non-DC host requests directory replication, used to extract password hashes.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: identity
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1003.006
+tags:
+  - dcsync
+  - active_directory
+  - mimikatz
+ai_triage_hints:
+  ignore_when:
+    - "Source is a known domain controller"
+    - "Azure AD Connect server performing sync"
+  suspicious_when:
+    - "Replication request from workstation"
+    - "Non-DC requesting GetNCChanges"
+---
+metadata.log_source IN ("windows_event", "windows_security")
+| where metadata.event_code="4662" OR message CONTAINS "GetNCChanges" OR message CONTAINS "DsGetNCChanges"
+| where src_endpoint.hostname NOT CONTAINS "dc" AND src_endpoint.hostname NOT CONTAINS "domain"
+| risk score=95 entity=src_endpoint.hostname factor="DCSync from non-DC"
+| table time, src_endpoint.hostname, src_endpoint.ip, user.name, dst_endpoint.hostname, risk_score, risk_factors

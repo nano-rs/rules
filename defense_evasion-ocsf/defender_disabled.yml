@@ -1,0 +1,32 @@
+---
+title: windows_defender_disabled
+description: Detects attempts to disable Windows Defender real-time protection or tamper with its configuration.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0112
+mitre_techniques:
+  - T1685
+tags:
+  - defender
+  - antivirus
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT deploying alternative AV solution"
+    - "Testing environment with approved policy"
+  suspicious_when:
+    - "Defender disabled by script or command line"
+    - "Multiple Defender features disabled at once"
+---
+class_uid=1007 activity_id=1
+| where process.cmd_line CONTAINS "Set-MpPreference" AND (process.cmd_line CONTAINS "DisableRealtimeMonitoring" OR process.cmd_line CONTAINS "DisableBehaviorMonitoring" OR process.cmd_line CONTAINS "DisableIOAVProtection")
+| risk score=85 entity=device.hostname factor="Defender protection disabled"
+| where process.cmd_line CONTAINS "DisableRealtimeMonitoring $true" OR process.cmd_line CONTAINS "DisableRealtimeMonitoring 1"
+| risk score=90 factor="Real-time protection disabled"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

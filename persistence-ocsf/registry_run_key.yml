@@ -1,0 +1,34 @@
+---
+title: registry_run_key_modification
+description: Detects modification of registry Run/RunOnce keys for persistence.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1547.001
+tags:
+  - registry
+  - persistence
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Software installer adding legitimate startup entry"
+    - "GPO-deployed startup configuration"
+  suspicious_when:
+    - "Value points to executable in temp or user directory"
+    - "Registry change made by scripting engine"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=201001 OR class_uid=201002
+| where reg_key.path CONTAINS "\\CurrentVersion\\Run" OR reg_value.path CONTAINS "\\CurrentVersion\\Run"
+| where reg_value.data CONTAINS "Temp" OR reg_value.data CONTAINS "AppData" OR reg_value.data CONTAINS "powershell" OR reg_value.data CONTAINS "cmd.exe"
+| risk score=60 entity=device.hostname factor="Suspicious Run key"
+| where actor.process.name IN ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe", "mshta.exe")
+| risk score=80 factor="Script engine modified Run key"
+| table time, device.hostname, actor.user.name, actor.process.name, reg_key.path, reg_value.path, reg_value.name, reg_value.data, risk_score, unmapped.risk_factors

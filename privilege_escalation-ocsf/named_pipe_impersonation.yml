@@ -1,0 +1,34 @@
+---
+title: named_pipe_impersonation
+description: Detects creation of named pipes commonly associated with privilege escalation tools like PrintSpoofer and RottenPotato.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0004
+mitre_techniques:
+  - T1134.001
+tags:
+  - named_pipe
+  - potato
+  - privilege_escalation
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Pipe is from known application (SQL Server, IIS)"
+  suspicious_when:
+    - "Pipe name matches known exploit tool patterns"
+    - "Created by low-privilege process"
+---
+metadata.log_source="windows_sysmon"
+| where metadata.event_code IN ("17", "18")
+| where file.name CONTAINS "spoolss" OR file.name CONTAINS "efsrpc" OR file.name CONTAINS "lsarpc" OR file.name CONTAINS "samr" OR file.path CONTAINS "spoolss" OR file.path CONTAINS "efsrpc" OR file.path CONTAINS "lsarpc" OR file.path CONTAINS "samr" OR message CONTAINS "spoolss" OR message CONTAINS "efsrpc" OR message CONTAINS "lsarpc" OR message CONTAINS "samr"
+| risk score=70 entity=device.hostname factor="Suspicious named pipe"
+| prevalence enrich=true window=30d
+| where host_count < 10
+| risk score=85 factor="Rare pipe creator"
+| table time, device.hostname, actor.user.name, actor.process.name, file.name, file.path, risk_score, unmapped.risk_factors

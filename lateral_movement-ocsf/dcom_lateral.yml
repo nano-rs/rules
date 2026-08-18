@@ -1,0 +1,33 @@
+---
+title: dcom_lateral_movement
+description: Detects DCOM-based lateral movement using MMC, ShellBrowserWindow, or other DCOM objects.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0008
+mitre_techniques:
+  - T1021.003
+tags:
+  - dcom
+  - lateral_movement
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Known management tool using DCOM"
+    - "MMC launched by administrator locally"
+  suspicious_when:
+    - "DCOM spawning shell on remote host"
+    - "Unusual DCOM application activation"
+---
+class_uid=1007 activity_id=1
+| where actor.process.name="mmc.exe" OR actor.process.name="explorer.exe"
+| where process.name IN ("cmd.exe", "powershell.exe") AND process.cmd_line CONTAINS "\\*"
+| risk score=70 entity=device.hostname factor="Potential DCOM lateral movement"
+| where process.cmd_line CONTAINS "-enc" OR process.cmd_line CONTAINS "IEX"
+| risk score=85 factor="Suspicious DCOM payload"
+| table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, risk_factors

@@ -1,0 +1,35 @@
+---
+title: web_application_defacement
+description: Detects modification of web server content files which may indicate website defacement.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0040
+mitre_techniques:
+  - T1491.002
+tags:
+  - defacement
+  - web
+  - impact
+ai_triage_hints:
+  ignore_when:
+    - "Authorized web deployment"
+    - "CI/CD pipeline deploying updates"
+  suspicious_when:
+    - "Web files modified by non-deployment process"
+    - "index.html modified outside deployment window"
+---
+class_uid=1001
+| where activity_id=3
+| where file.path CONTAINS "wwwroot" OR file.path CONTAINS "htdocs" OR file.path CONTAINS "public_html" OR file.path CONTAINS "nginx/html"
+| where file.path CONTAINS "index.htm" OR file.path CONTAINS "default.asp" OR file.path CONTAINS "index.php"
+| where actor.process.name NOT IN ("w3wp.exe", "httpd", "nginx", "apache2", "java")
+| risk score=75 entity=device.hostname factor="Web content modified"
+| where actor.process.name IN ("cmd.exe", "powershell.exe", "bash")
+| risk score=90 factor="Shell modified web content"
+| table time, device.hostname, actor.user.name, actor.process.name, file.path, risk_score, risk_factors

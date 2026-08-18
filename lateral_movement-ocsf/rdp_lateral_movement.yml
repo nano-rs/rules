@@ -1,0 +1,34 @@
+---
+title: rdp_lateral_movement_pattern
+description: Detects RDP connections between internal hosts that may indicate lateral movement.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 30m
+folder: network
+mitre_tactics:
+  - TA0008
+mitre_techniques:
+  - T1021.001
+tags:
+  - rdp
+  - remote_desktop
+  - lateral_movement
+ai_triage_hints:
+  ignore_when:
+    - "IT admin connecting to managed servers"
+    - "Known jump box / bastion host usage"
+  suspicious_when:
+    - "RDP from workstation to workstation"
+    - "First-time RDP connection for this user-host pair"
+---
+class_uid=4001 dst_endpoint.port=3389
+| where is_private_ip(src_endpoint.ip) AND is_private_ip(dst_endpoint.ip)
+| prevalence enrich=true window=30d
+| where host_count < 5
+| risk score=55 entity=src_endpoint.ip factor="Uncommon internal RDP"
+| where host_count < 2
+| risk score=75 factor="First-seen RDP connection"
+| table time, src_endpoint.ip, src_endpoint.hostname, actor.user.name, dst_endpoint.ip, dst_endpoint.hostname, host_count, risk_score, risk_factors

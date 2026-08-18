@@ -1,0 +1,44 @@
+---
+title: network_reconnaissance_command_sequence
+description: Detects network reconnaissance patterns where multiple discovery commands are executed in sequence. This pattern indicates an attacker or tool enumerating the network after gaining initial access.
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1016
+  - T1018
+  - T1049
+  - T1087
+tags:
+  - discovery
+  - reconnaissance
+  - sequence
+  - post_exploitation
+ai_triage_hints:
+  ignore_when:
+    - "User is IT/network administrator troubleshooting"
+    - "Commands are part of a monitoring or inventory script"
+    - "Activity is from a known asset discovery tool"
+  suspicious_when:
+    - "User is not in IT or admin role"
+    - "Commands executed in rapid succession (scripted)"
+    - "Occurs shortly after a login from unusual location"
+    - "Host is a workstation, not admin jump box"
+---
+class_uid=1007 activity_id=1
+| where process.name IN ("ipconfig.exe", "net.exe", "nltest.exe", "nslookup.exe", "ping.exe", "systeminfo.exe", "whoami.exe", "hostname.exe", "netstat.exe", "arp.exe", "route.exe", "tracert.exe", "nbtstat.exe", "quser.exe", "query.exe")
+| sequence by actor.user.name, device.hostname maxspan=10m
+    fields(process.name, process.cmd_line)
+    [process.name IN ("whoami.exe", "hostname.exe", "systeminfo.exe")]
+    [process.name IN ("ipconfig.exe", "netstat.exe", "arp.exe", "route.exe")]
+    [process.name IN ("net.exe", "nltest.exe", "nslookup.exe") process.cmd_line=/(view|user|group|domain|query)/i]
+| risk score=55 entity=device.hostname factor="Reconnaissance sequence"
+| where sequence_duration_seconds < 60
+| risk score=75 factor="Rapid enumeration"
+| table actor.user.name, device.hostname, step1_process_name, step1_process_cmd_line, step2_process_name, step2_process_cmd_line, step3_process_name, step3_process_cmd_line, sequence_duration_seconds, risk_score, risk_factors

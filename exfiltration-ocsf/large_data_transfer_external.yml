@@ -1,0 +1,48 @@
+---
+title: large_outbound_data_transfer
+description: Detects large outbound data transfers to external IP addresses, especially during off-hours or to non-standard ports.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 1h
+folder: network
+mitre_tactics:
+  - TA0010
+mitre_techniques:
+  - T1048
+  - T1041
+tags:
+  - exfiltration
+  - data_theft
+  - network
+ai_triage_hints:
+  ignore_when:
+    - "Destination is a known backup or cloud storage service"
+    - "Transfer is to a corporate-owned external IP"
+    - "User regularly performs large data transfers (data team)"
+  suspicious_when:
+    - "Destination is a VPS or hosting provider"
+    - "Transfer occurs at unusual hours for this user"
+    - "Data was recently accessed from sensitive shares"
+    - "Multiple large transfers to different destinations"
+---
+class_uid=4001 OR class_uid=4002
+| where traffic.bytes_out > 50000000
+| where dst_endpoint.ip != /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| eval bytes_out_mb = round(traffic.bytes_out / 1000000, 2)
+| eval hour = tonumber(strftime(time, "%H"))
+| eval day = tonumber(strftime(time, "%w"))
+| risk score=50 entity=src_endpoint.ip factor="Large outbound transfer"
+| where traffic.bytes_out > 100000000
+| risk score=65 factor="Very large transfer (>100MB)"
+| where traffic.bytes_out > 500000000
+| risk score=80 factor="Massive transfer (>500MB)"
+| where dst_endpoint.port NOT IN (80, 443, 22)
+| risk score=75 factor="Non-standard port"
+| where hour < 6 OR hour > 20
+| risk score=80 factor="Off-hours transfer"
+| where day = 0 OR day = 6
+| risk score=85 factor="Weekend transfer"
+| table time, src_endpoint.ip, src_endpoint.hostname, actor.user.name, dst_endpoint.ip, dst_endpoint.port, bytes_out_mb, hour, risk_score, risk_factors

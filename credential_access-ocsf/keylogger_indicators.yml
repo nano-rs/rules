@@ -1,0 +1,35 @@
+---
+title: keylogger_behavior_indicators
+description: Detects processes exhibiting keylogger behavior such as setting keyboard hooks or accessing input APIs. Rarity is computed as distinct-host count within the rule lookback window; the UDM rule's 30-day `prevalence` enrichment has no promoted OCSF 1.9 equivalent on this deployment.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0006
+  - TA0009
+mitre_techniques:
+  - T1056.001
+tags:
+  - keylogger
+  - input_capture
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Known accessibility software"
+    - "Remote desktop or KVM software"
+  suspicious_when:
+    - "Unknown process setting keyboard hooks"
+    - "Process has low prevalence"
+---
+metadata.log_source IN ("endpoint_edr", "windows_sysmon") class_uid=1007 activity_id=1
+| where process.cmd_line CONTAINS "SetWindowsHookEx" OR process.cmd_line CONTAINS "GetAsyncKeyState" OR process.cmd_line CONTAINS "GetKeyState"
+| stats count() as hits, dc(device.hostname) as host_count, values(device.hostname) as hosts, values(process.file.hashes.sha256) as hashes, min(time) as time by process.name
+| where host_count < 10
+| risk score=70 entity=process.name factor="Potential keylogger"
+| where host_count < 3
+| risk score=90 factor="Rare process with input capture"
+| table time, hosts, process.name, hashes, host_count, hits, risk_score, risk_factors

@@ -27,6 +27,6 @@ ai_triage_hints:
     - "Source IP is external or from an unusual subnet"
     - "Failures followed by a successful logon (credential found)"
 ---
-source_type="windows_event" class_uid=3002 status="Failure"
-| stats count() as failures, dc(user.name) as targeted_users, values(user.name) as users, min(timestamp) as first_seen, max(timestamp) as last_seen by src_endpoint.ip, src_endpoint.hostname
+metadata.log_source="windows_event" class_uid=3002 activity_id=1 status="Failure"
+| stats count() as failures, dc(user.name) as targeted_users, values(user.name) as users, min(time) as first_seen, max(time) as last_seen by src_endpoint.ip, src_endpoint.hostname
 | where failures > 5

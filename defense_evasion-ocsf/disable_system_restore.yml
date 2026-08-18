@@ -1,0 +1,30 @@
+---
+title: system_restore_disabled
+description: Detects disabling of System Restore or deletion of shadow copies, often precursor to ransomware.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0040
+mitre_techniques:
+  - T1490
+tags:
+  - shadow_copy
+  - ransomware
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IT admin managing disk space"
+    - "Authorized backup rotation"
+  suspicious_when:
+    - "Shadow copies deleted by non-admin process"
+    - "Combined with file encryption activity"
+---
+class_uid=1007 activity_id=1
+| where (process.name="vssadmin.exe" AND process.cmd_line CONTAINS "delete shadows") OR (process.name="wmic.exe" AND process.cmd_line CONTAINS "shadowcopy" AND process.cmd_line CONTAINS "delete") OR (process.cmd_line CONTAINS "bcdedit" AND process.cmd_line CONTAINS "recoveryenabled" AND process.cmd_line CONTAINS "no")
+| risk score=90 entity=device.hostname factor="Recovery options disabled"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

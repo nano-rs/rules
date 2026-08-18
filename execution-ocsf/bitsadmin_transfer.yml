@@ -1,0 +1,38 @@
+---
+title: bitsadmin_file_transfer
+description: Detects BITSAdmin being used to download or upload files, often used as a LOLBin for payload delivery.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+  - TA0011
+mitre_techniques:
+  - T1197
+  - T1105
+tags:
+  - bitsadmin
+  - lolbin
+  - download
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "BITS job is from Windows Update or SCCM"
+    - "Transfer is to/from known internal servers"
+  suspicious_when:
+    - "Transfer involves external URLs"
+    - "Downloaded file is executable"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="bitsadmin.exe"
+| where process.cmd_line CONTAINS "/transfer" OR process.cmd_line CONTAINS "/create"
+| where process.cmd_line CONTAINS "http"
+| risk score=65 entity=device.hostname factor="BITSAdmin file transfer"
+| where process.cmd_line CONTAINS ".exe" OR process.cmd_line CONTAINS ".dll"
+| risk score=80 factor="Executable transfer"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors

@@ -1,0 +1,34 @@
+---
+title: ssh_lateral_movement_chain
+description: Detects SSH sessions chaining through multiple internal hosts, indicative of lateral movement.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 30m
+folder: network
+mitre_tactics:
+  - TA0008
+mitre_techniques:
+  - T1021.004
+tags:
+  - ssh
+  - lateral_movement
+  - linux
+ai_triage_hints:
+  ignore_when:
+    - "DevOps engineer connecting to servers"
+    - "Known bastion host chain"
+  suspicious_when:
+    - "Multiple SSH hops in short time"
+    - "SSH to hosts not typically accessed by this user"
+---
+class_uid=4001 dst_endpoint.port=22
+| where is_private_ip(src_endpoint.ip)
+| stats count, dc(dst_endpoint.ip) as unique_dests, min(time) as time by src_endpoint.ip, actor.user.name
+| where unique_dests > 3
+| risk score=50 entity=src_endpoint.ip factor="Multiple SSH destinations"
+| where unique_dests > 8
+| risk score=75 factor="SSH lateral movement pattern"
+| table time, src_endpoint.ip, actor.user.name, unique_dests, count, risk_score, risk_factors

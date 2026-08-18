@@ -1,0 +1,33 @@
+---
+title: html_smuggling_detection
+description: Detects HTML smuggling where JavaScript in HTML files assembles and drops malicious payloads.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1027.006
+tags:
+  - html_smuggling
+  - phishing
+  - evasion
+ai_triage_hints:
+  ignore_when:
+    - "Known web application download behavior"
+    - "Legitimate file download from corporate portal"
+  suspicious_when:
+    - "HTML file creates executable payload"
+    - "Browser drops file to Downloads then user executes"
+---
+metadata.log_source IN ("endpoint_edr", "windows_sysmon") class_uid=1001
+| sequence by device.hostname maxspan=5m
+    fields(actor.process.name, file.path, actor.process.cmd_line, actor.user.name)
+    [activity_id=14 (file.path CONTAINS ".html" OR file.path CONTAINS ".htm")]
+    [activity_id=1 file.path=/(\.exe|\.dll|\.iso|\.zip|\.msi)$/i file.path CONTAINS "Downloads"]
+| risk score=75 entity=device.hostname factor="HTML smuggling pattern"
+| table time, device.hostname, step1_actor_user_name, step1_file_path, step2_file_path, sequence_duration_seconds, risk_score, risk_factors

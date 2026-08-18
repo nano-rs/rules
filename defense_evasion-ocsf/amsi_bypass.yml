@@ -1,0 +1,33 @@
+---
+title: amsi_bypass_detection
+description: Detects attempts to bypass the Antimalware Scan Interface (AMSI) in PowerShell or .NET.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0112
+mitre_techniques:
+  - T1685
+tags:
+  - amsi
+  - bypass
+  - powershell
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Security researcher testing AMSI integration"
+  suspicious_when:
+    - "AMSI bypass followed by encoded command execution"
+    - "Multiple bypass techniques in single session"
+---
+class_uid=1007 activity_id=1
+| where process.name="powershell.exe" OR process.name="pwsh.exe"
+| where process.cmd_line CONTAINS "AmsiUtils" OR process.cmd_line CONTAINS "amsiInitFailed" OR process.cmd_line CONTAINS "AmsiScanBuffer" OR process.cmd_line CONTAINS "NonPublic"
+| risk score=85 entity=device.hostname factor="AMSI bypass attempt"
+| where process.cmd_line CONTAINS "Reflection" AND process.cmd_line CONTAINS "NonPublic"
+| risk score=90 factor="Reflection-based AMSI bypass"
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

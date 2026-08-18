@@ -1,0 +1,38 @@
+---
+title: lsass_memory_credential_dump
+description: Detects potential credential dumping via LSASS memory access followed by suspicious file creation and network activity. This sequence is characteristic of tools like Mimikatz, ProcDump, or custom credential harvesters.
+author: nano.rs
+severity: critical
+mode: staging
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 20m
+folder: endpoint
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1003.001
+tags:
+  - credential_dumping
+  - mimikatz
+  - sequence
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Process is a known EDR or AV product performing memory scanning"
+    - "Activity is from IT admin running authorized security assessment"
+    - "Parent process is Windows Defender or other security tooling"
+  suspicious_when:
+    - "Accessing process is unsigned or has low prevalence"
+    - "Dump file is created in temp directory"
+    - "Network connection follows within minutes to external IP"
+    - "Parent process is cmd.exe, powershell.exe, or scripting engine"
+---
+metadata.log_source IN ("windows_sysmon", "endpoint_edr")
+| sequence by device.hostname maxspan=15m
+    fields(process.name, actor.process.name, actor.process.cmd_line, file.path, dst_endpoint.ip)
+    [class_uid=1007 activity_id=3 process.name="lsass.exe"]
+    [class_uid=1001 activity_id=1 file.path=/(\.dmp|\.bin|\.log)$/i]
+    [class_uid=4001 dst_endpoint.ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/]
+| risk score=95 entity=device.hostname factor="LSASS dump with exfil pattern"
+| table time, device.hostname, step1_actor_process_name, step1_actor_process_cmd_line, step2_file_path, step3_dst_endpoint_ip, sequence_duration_seconds, risk_score, risk_factors

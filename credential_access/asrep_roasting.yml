@@ -1,0 +1,34 @@
+---
+title: asrep_roasting_activity
+description: Detects Kerberos AS-REQ messages for accounts with pre-authentication disabled returning RC4-encrypted AS-REP tickets, indicative of AS-REP Roasting. Attackers request AS-REP material for accounts flagged DONT_REQ_PREAUTH and crack the encrypted blob offline to recover the password.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1558.004
+tags:
+  - kerberos
+  - asrep_roasting
+  - active_directory
+ai_triage_hints:
+  ignore_when:
+    - "Legacy account that legitimately has pre-authentication disabled"
+    - "Application or appliance that requires RC4 Kerberos encryption"
+  suspicious_when:
+    - "Single source requesting AS-REP material for many users"
+    - "AS-REQ for a privileged account with pre-authentication disabled"
+---
+source_type=windows_security OR source_type=auth_logs
+| where event_type="ticket_request" AND auth_type="as" AND pre_auth_type="0"
+| where enc_type="0x17" OR message CONTAINS "0x17" OR message CONTAINS "RC4"
+| stats count, dc(user) as unique_targets, min(timestamp) as timestamp by src_ip, src_host
+| risk score=75 entity=src_host factor="AS-REP requested with pre-auth disabled (RC4)"
+| where unique_targets > 3
+| risk score=90 factor="Likely AS-REP Roasting across multiple accounts"
+| table timestamp, src_ip, src_host, user, count, unique_targets, risk_score, risk_factors

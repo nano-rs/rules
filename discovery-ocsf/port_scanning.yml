@@ -1,0 +1,35 @@
+---
+title: internal_port_scanning
+description: Detects internal network port scanning from a single source to many destinations.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: network
+mitre_tactics:
+  - TA0007
+mitre_techniques:
+  - T1046
+tags:
+  - port_scan
+  - network
+  - reconnaissance
+ai_triage_hints:
+  ignore_when:
+    - "Known vulnerability scanner (Nessus, Qualys)"
+    - "IT performing authorized network scan"
+  suspicious_when:
+    - "Scanning from workstation, not scanner"
+    - "Targeting many ports on single host"
+---
+class_uid=4001
+| stats count, dc(dst_endpoint.ip) as unique_ips, dc(dst_endpoint.port) as unique_ports, min(time) as time by src_endpoint.ip
+| where (unique_ips > 20 AND unique_ports > 5) OR unique_ports > 50
+| risk score=60 entity=src_endpoint.ip factor="Port scanning detected"
+| where unique_ips > 50
+| risk score=75 factor="Wide network scan"
+| where unique_ports > 100
+| risk score=85 factor="Extensive port enumeration"
+| table time, src_endpoint.ip, unique_ips, unique_ports, count, risk_score, risk_factors

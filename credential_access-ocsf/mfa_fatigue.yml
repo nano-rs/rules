@@ -1,0 +1,36 @@
+---
+title: mfa_push_notification_fatigue
+description: Detects MFA fatigue attacks with repeated MFA-bearing authentication events for a user in a short period. OCSF 1.9 has no distinct MFA-push/challenge activity, so the rule keys on Authentication events carrying is_mfa rather than on push notifications specifically.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1621
+tags:
+  - mfa
+  - fatigue
+  - authentication
+ai_triage_hints:
+  ignore_when:
+    - "User having legitimate connectivity issues"
+    - "Known MFA migration or testing"
+  suspicious_when:
+    - "Many push notifications in rapid succession"
+    - "Followed by an approval outside normal hours"
+---
+metadata.log_source IN ("okta", "azure_ad", "auth_logs") class_uid=3002
+| where is_mfa=true OR actor.session.is_mfa=true
+| stats count, min(time) as time by user.name, src_endpoint.ip
+| where count > 5
+| risk score=70 entity=user.name factor="MFA push fatigue"
+| where count > 10
+| risk score=85 factor="Severe MFA fatigue attack"
+| where count > 20
+| risk score=95 factor="Extreme MFA bombardment"
+| table time, user.name, src_endpoint.ip, count, risk_score, risk_factors

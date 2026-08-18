@@ -1,0 +1,34 @@
+---
+title: process_injection_detected
+description: Detects signs of process injection including suspicious cross-process access and memory allocation patterns.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+  - TA0004
+mitre_techniques:
+  - T1055
+tags:
+  - injection
+  - memory
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Security tool performing memory scanning"
+    - "Debugger attached to process"
+  suspicious_when:
+    - "Source process is unsigned or rare"
+    - "Target is a system process (svchost, explorer)"
+---
+class_uid=1007 activity_id=3
+| where actual_permissions IN (2035711, 2097151, 2031615, 5136, 5178, 1052672)
+| risk score=75 entity=device.hostname factor="Process injection detected"
+| prevalence enrich=true window=30d
+| where host_count < 5
+| risk score=90 factor="Rare injector process"
+| table time, device.hostname, actor.process.name, process.name, actual_permissions, actor.process.file.hashes.value, host_count, risk_score, risk_factors

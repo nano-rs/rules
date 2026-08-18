@@ -28,6 +28,6 @@ ai_triage_hints:
     - "Request was to a non-standard port (not 80/443)"
     - "Host also shows suspicious process activity in Sysmon"
 ---
-source_type="conduit_proxy" severity_id=4
-| stats count() as blocked_count, values(http_request.url.hostname) as domains, values(http_request.url.url_string) as urls, min(timestamp) as first_seen, max(timestamp) as last_seen by src_endpoint.ip
+metadata.log_source="conduit_proxy" class_uid=4002 disposition_id=2 severity_id>=4
+| stats count() as blocked_count, values(http_request.url.hostname) as domains, values(http_request.url.url_string) as urls, min(time) as first_seen, max(time) as last_seen by src_endpoint.ip
 | where blocked_count > 0

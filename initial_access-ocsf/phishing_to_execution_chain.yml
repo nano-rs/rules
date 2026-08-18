@@ -1,0 +1,45 @@
+---
+title: phishing_email_to_execution_chain
+description: Detects the full phishing attack chain - email with suspicious characteristics opened, link clicked to external domain, followed by file download and execution. This sequence captures the complete attack flow.
+author: nano.rs
+severity: critical
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0001
+  - TA0002
+mitre_techniques:
+  - T1566.001
+  - T1566.002
+  - T1204.001
+  - T1204.002
+tags:
+  - phishing
+  - sequence
+  - email
+  - initial_access
+ai_triage_hints:
+  ignore_when:
+    - "Email is from a known vendor or partner domain"
+    - "User is in security team testing phishing defenses"
+    - "Downloaded file is a known safe application"
+  suspicious_when:
+    - "Email subject contains urgency keywords (urgent, suspended, verify)"
+    - "Link domain was recently registered"
+    - "Downloaded file has low prevalence"
+    - "Execution occurred within minutes of download"
+---
+metadata.log_source IN ("email_gateway", "endpoint_edr", "proxy", "conduit_proxy", "windows_sysmon")
+| sequence by user.name maxspan=30m
+    fields(email.subject, email.from, http_request.url.url_string, http_request.url.hostname, file.path, process.name, process.cmd_line, device.hostname)
+    [class_uid=4009 email.subject=/(urgent|verify|suspended|password|security.alert)/i]
+    [class_uid=4002 http_request.url.hostname!=/company\.com$/i]
+    [class_uid=1001 activity_id=1 file.path=/\.(exe|scr|bat|cmd|ps1|vbs|js|hta|msi|dll|jar)$/i]
+    [class_uid=1007 activity_id=1]
+| risk score=90 entity=user.name factor="Complete phishing chain"
+| where sequence_duration_seconds < 300
+| risk score=95 factor="Rapid execution after download"
+| table time, user.name, step1_email_subject, step1_email_from, step2_http_request_url_url_string, step3_file_path, step4_process_name, step4_device_hostname, sequence_duration_seconds, risk_score, risk_factors

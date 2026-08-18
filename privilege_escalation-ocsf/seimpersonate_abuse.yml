@@ -1,0 +1,34 @@
+---
+title: seimpersonate_privilege_abuse
+description: Detects abuse of SeImpersonatePrivilege commonly exploited by Potato-family exploits on Windows.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0004
+mitre_techniques:
+  - T1134.001
+tags:
+  - potato
+  - impersonation
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "IIS or SQL Server performing normal impersonation"
+    - "Known service account behavior"
+  suspicious_when:
+    - "Service account spawning interactive shell"
+    - "SYSTEM shell from web or database service"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where actor.process.name IN ("w3wp.exe", "sqlservr.exe", "mssql.exe", "tomcat.exe")
+| where process.name IN ("cmd.exe", "powershell.exe", "whoami.exe", "net.exe")
+| risk score=80 entity=device.hostname factor="Service account spawning shell"
+| where actor.user.name CONTAINS "SYSTEM" OR actor.user.name CONTAINS "NT AUTHORITY" OR actor.user.domain CONTAINS "NT AUTHORITY"
+| risk score=95 factor="SYSTEM shell from service"
+| table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, unmapped.risk_factors

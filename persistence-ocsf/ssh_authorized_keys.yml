@@ -1,0 +1,33 @@
+---
+title: ssh_authorized_keys_modification
+description: Detects modifications to SSH authorized_keys files for persistent access.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1098.004
+tags:
+  - ssh
+  - linux
+  - persistence
+ai_triage_hints:
+  ignore_when:
+    - "IT admin adding authorized key for management"
+    - "Automated provisioning system (Ansible, Puppet)"
+  suspicious_when:
+    - "Key added by non-admin user"
+    - "Multiple keys added in short period"
+---
+metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr"
+| where class_uid=1001 AND (activity_id=1 OR activity_id=3)
+| where file.path CONTAINS "authorized_keys"
+| risk score=70 entity=device.hostname factor="SSH authorized_keys modified"
+| where actor.user.name != "root" AND actor.user.name != "ansible" AND actor.user.name != "puppet"
+| risk score=85 factor="Non-admin modified SSH keys"
+| table time, device.hostname, actor.user.name, file.path, actor.process.name, actor.process.cmd_line, risk_score, unmapped.risk_factors

@@ -28,6 +28,6 @@ ai_triage_hints:
     - "Parent process is explorer.exe or a browser"
     - "Associated with network connections to external IPs"
 ---
-source_type="windows_sysmon" process.name="rundll32.exe" process.cmd_line CONTAINS "javascript:"
-| stats count() as beacons, values(process.cmd_line) as commands, values(actor.user.name) as users, min(timestamp) as first_seen, max(timestamp) as last_seen by device.hostname
+metadata.log_source="windows_sysmon" class_uid=1007 activity_id=1 process.name="rundll32.exe" process.cmd_line CONTAINS "javascript:"
+| stats count() as beacons, values(process.cmd_line) as commands, values(actor.user.name) as users, min(time) as first_seen, max(time) as last_seen by device.hostname
 | where beacons > 0

@@ -1,0 +1,34 @@
+---
+title: kerberoasting_activity
+description: Detects Kerberos service ticket requests (TGS) for multiple SPNs, indicative of Kerberoasting attacks. Distinct-SPN counting falls back to distinct dst_endpoint.hostname because the requested service principal is not a promoted OCSF 1.9 path on this deployment.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1558.003
+tags:
+  - kerberos
+  - kerberoasting
+  - active_directory
+ai_triage_hints:
+  ignore_when:
+    - "Service account performing legitimate ticket requests"
+    - "Known vulnerability scanner activity"
+  suspicious_when:
+    - "Single user requesting many service tickets"
+    - "Tickets requested with RC4 encryption"
+---
+metadata.log_source IN ("windows_event", "windows_security", "auth_logs") class_uid=3002
+| where metadata.event_code="4769" OR activity_id=4
+| stats count, dc(dst_endpoint.hostname) as unique_targets, values(src_endpoint.svc_name) as services, min(time) as time by user.name, src_endpoint.ip
+| where count > 10 AND unique_targets > 5
+| risk score=75 entity=user.name factor="Multiple TGS requests"
+| where unique_targets > 15
+| risk score=90 factor="Likely Kerberoasting"
+| table time, user.name, src_endpoint.ip, services, count, unique_targets, risk_score, risk_factors

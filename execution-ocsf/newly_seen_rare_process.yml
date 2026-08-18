@@ -1,0 +1,41 @@
+---
+title: newly_seen_rare_process_execution
+description: Detects execution of processes with file hashes that are both rare (seen on few hosts) AND newly appeared in the environment (first seen recently). This combination is highly indicative of new malware or attacker tools being deployed.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 1h
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1204.002
+tags:
+  - prevalence
+  - rare_hash
+  - new_artifact
+  - execution
+ai_triage_hints:
+  ignore_when:
+    - "Hash belongs to a recently deployed software update"
+    - "Process is from a new but legitimate application install"
+    - "File is signed by a trusted vendor"
+  suspicious_when:
+    - "Hash has no vendor signature"
+    - "Process spawns child processes or makes network connections"
+    - "File located in temp or user-writable directory"
+    - "Execution shortly after file creation"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.file.hashes.value != ""
+| prevalence enrich=true window=30d
+| where host_count < 5 AND prevalence_first_seen > now() - INTERVAL 24 HOUR
+| risk score=80 entity=device.hostname factor="Newly seen rare process"
+| where host_count < 3
+| risk score=90 factor="Very rare hash"
+| where process.file.path CONTAINS "Temp" OR process.file.path CONTAINS "AppData\\Local"
+| risk score=95 factor="Suspicious execution path"
+| table time, device.hostname, actor.user.name, process.name, process.file.path, process.file.hashes.value, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors

@@ -1,0 +1,35 @@
+---
+title: group_policy_object_modification
+description: Detects modifications to Group Policy Objects which can affect security settings across the domain.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: identity
+mitre_tactics:
+  - TA0004
+  - TA0112
+mitre_techniques:
+  - T1484.001
+tags:
+  - gpo
+  - active_directory
+  - domain
+ai_triage_hints:
+  ignore_when:
+    - "GPO change is in approved change management window"
+    - "Modified by authorized domain admin"
+  suspicious_when:
+    - "GPO disables security controls"
+    - "Change made outside business hours"
+---
+metadata.log_source="windows_security" OR metadata.log_source="auth_logs"
+| where metadata.event_code IN ("5136", "5137", "5141")
+| where message CONTAINS "groupPolicyContainer" OR message CONTAINS "GPC" OR message CONTAINS "Group Policy"
+| risk score=60 entity=actor.user.name factor="GPO modified"
+| eval hour = tonumber(strftime(time, "%H"))
+| where hour < 7 OR hour > 19
+| risk score=80 factor="Off-hours GPO change"
+| table time, actor.user.name, device.hostname, dst_endpoint.hostname, message, risk_score, unmapped.risk_factors

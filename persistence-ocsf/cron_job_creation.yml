@@ -1,0 +1,35 @@
+---
+title: suspicious_cron_job_creation
+description: Detects creation of cron jobs with suspicious commands or by unusual processes.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+  - TA0002
+mitre_techniques:
+  - T1053.003
+tags:
+  - cron
+  - linux
+  - persistence
+ai_triage_hints:
+  ignore_when:
+    - "Cron job is from package manager or system update"
+    - "Known automation tool creating scheduled task"
+  suspicious_when:
+    - "Cron command includes network activity (curl, wget)"
+    - "Cron command runs encoded or obfuscated script"
+---
+metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr"
+| where (class_uid=1007 AND activity_id=1 AND process.name="crontab") OR (class_uid=1001 AND (file.path CONTAINS "/cron.d/" OR file.path CONTAINS "/crontab"))
+| risk score=45 entity=device.hostname factor="Cron job modified"
+| where process.cmd_line CONTAINS "curl" OR process.cmd_line CONTAINS "wget" OR process.cmd_line CONTAINS "nc " OR process.cmd_line CONTAINS "python" OR actor.process.cmd_line CONTAINS "curl" OR actor.process.cmd_line CONTAINS "wget" OR actor.process.cmd_line CONTAINS "nc " OR actor.process.cmd_line CONTAINS "python"
+| risk score=75 factor="Network command in cron"
+| where process.cmd_line CONTAINS "base64" OR process.cmd_line CONTAINS "|sh" OR process.cmd_line CONTAINS "|bash" OR actor.process.cmd_line CONTAINS "base64" OR actor.process.cmd_line CONTAINS "|sh" OR actor.process.cmd_line CONTAINS "|bash"
+| risk score=85 factor="Encoded or piped execution"
+| table time, device.hostname, actor.user.name, process.cmd_line, actor.process.cmd_line, file.path, risk_score, unmapped.risk_factors

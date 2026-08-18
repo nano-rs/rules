@@ -1,0 +1,34 @@
+---
+title: suspicious_email_attachment_opened
+description: Detects opening of email attachments with suspicious file types or from external senders.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0001
+mitre_techniques:
+  - T1566.001
+tags:
+  - phishing
+  - email
+  - attachment
+ai_triage_hints:
+  ignore_when:
+    - "Attachment is from known internal sender"
+    - "File type is common document format"
+  suspicious_when:
+    - "Macro-enabled document (.docm, .xlsm)"
+    - "Executable attachment (.exe, .scr, .bat)"
+---
+metadata.log_source IN ("email_gateway", "endpoint_edr", "windows_sysmon") (class_uid=4009 OR (class_uid=1001 activity_id=14))
+| where file.path=/(\.docm|\.xlsm|\.pptm|\.xll|\.iso|\.img|\.vhd|\.one|\.url|\.lnk)$/i
+| risk score=55 entity=user.name factor="Suspicious attachment type"
+| where file.path=/(\.iso|\.img|\.vhd)$/i
+| risk score=75 factor="Container file attachment"
+| where file.path CONTAINS ".xll"
+| risk score=80 factor="Excel add-in attachment"
+| table time, user.name, device.hostname, email.from, email.subject, file.path, risk_score, risk_factors

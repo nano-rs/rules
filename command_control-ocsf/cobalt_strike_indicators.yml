@@ -1,0 +1,33 @@
+---
+title: cobalt_strike_indicators
+description: Detects indicators of Cobalt Strike beacon activity including named pipes, malleable C2 patterns, and known defaults.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0011
+mitre_techniques:
+  - T1071.001
+  - T1095
+tags:
+  - cobalt_strike
+  - c2
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Authorized red team exercise with known timeframe"
+  suspicious_when:
+    - "Default Cobalt Strike named pipe patterns"
+    - "Known CS beacon sleep patterns"
+---
+class_uid=1007
+| where metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where process.cmd_line CONTAINS "\\MSSE-" OR process.cmd_line CONTAINS "\\postex_" OR process.cmd_line CONTAINS "\\status_" OR process.cmd_line CONTAINS "\\msagent_" OR process.cmd_line CONTAINS "\\postex_ssh_"
+| risk score=90 entity=device.hostname factor="Cobalt Strike indicators"
+| where process.cmd_line CONTAINS "\\MSSE-" AND process.cmd_line CONTAINS "\\pipe\\"
+| risk score=95 factor="Default CS named pipe"
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors
