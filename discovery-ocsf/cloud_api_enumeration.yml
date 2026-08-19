@@ -27,7 +27,7 @@ ai_triage_hints:
     - "Calls span multiple services"
 ---
 class_uid=6003
-| where api.operation=/^(List|Describe|Get)/i
+| where api.operation=/^List/i OR api.operation=/^Describe/i OR api.operation=/^Get/i
 | stats count, dc(api.operation) as unique_apis, min(time) as time by actor.user.name, src_endpoint.ip
 | where count > 50 AND unique_apis > 10
 | risk score=55 entity=actor.user.name factor="Cloud API enumeration"

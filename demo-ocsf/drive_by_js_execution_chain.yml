@@ -41,7 +41,7 @@ metadata.log_source="windows_sysmon"
     fields(file.path, file.hashes.value, process.name, process.cmd_line, actor.process.name, actor.user.name, dst_endpoint.ip, dst_endpoint.port)
     [class_uid=1001 activity_id=1 file.path=/\.js$/i file.hashes.value!=""]
     [class_uid=1007 activity_id=1 process.name="wscript.exe" process.cmd_line CONTAINS ".js"]
-    [class_uid=4001 actor.process.name="wscript.exe" dst_endpoint.port=443 dst_endpoint.ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/]
+    [class_uid=4001 actor.process.name="wscript.exe" dst_endpoint.port=443 NOT is_private_ip(dst_endpoint.ip)]
     [class_uid=1007 activity_id=1 process.name="powershell.exe" actor.process.name="wscript.exe"]
 | risk score=95 entity=device.hostname factor="Drive-by JavaScript execution chain"
 | table time, device.hostname, step1_actor_user_name, step1_file_path, step1_file_hashes_value, step2_process_name, step2_process_cmd_line, step3_dst_endpoint_ip, step3_dst_endpoint_port, step4_process_name, step4_actor_process_name, step4_process_cmd_line, sequence_duration_seconds, risk_score, risk_factors

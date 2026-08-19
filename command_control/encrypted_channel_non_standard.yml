@@ -28,7 +28,7 @@ ai_triage_hints:
 source_type=firewall OR source_type=network_flow
 | where protocol="tls" OR protocol="ssl"
 | where dest_port NOT IN (443, 8443, 993, 995, 636, 989, 990)
-| where dest_ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where NOT is_private_ip(dest_ip)
 | risk score=50 entity=src_host factor="TLS on non-standard port"
 | prevalence enrich=true window=30d
 | where host_count < 5

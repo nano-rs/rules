@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Small consistent payload sizes"
 ---
 class_uid=4001
-| where dst_endpoint.ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where NOT is_private_ip(dst_endpoint.ip)
 | stats count, dc(time) as unique_times, min(time) as time by src_endpoint.hostname, dst_endpoint.ip, dst_endpoint.port
 | where count > 20 AND unique_times > 15
 | prevalence enrich=true window=30d

@@ -26,7 +26,7 @@ ai_triage_hints:
 ---
 class_uid=4001
 | where connection_info.protocol_num=1
-| where dst_endpoint.ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where NOT is_private_ip(dst_endpoint.ip)
 | stats count, sum(traffic.bytes_out) as total_bytes, min(time) as time by src_endpoint.ip, dst_endpoint.ip
 | where count > 100 OR total_bytes > 1000000
 | risk score=60 entity=src_endpoint.ip factor="Excessive ICMP traffic"

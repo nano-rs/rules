@@ -28,7 +28,7 @@ ai_triage_hints:
 class_uid=4001
 | where connection_info.protocol_num=6
 | where dst_endpoint.port NOT IN (80, 22, 25, 88, 135, 139, 445, 3389)
-| where dst_endpoint.ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where NOT is_private_ip(dst_endpoint.ip)
 | risk score=50 entity=src_endpoint.hostname factor="TCP session on non-standard port"
 | prevalence enrich=true window=30d
 | where host_count < 5

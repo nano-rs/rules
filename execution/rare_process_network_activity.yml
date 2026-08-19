@@ -32,9 +32,9 @@ ai_triage_hints:
 ---
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="network_connect" AND dest_port > 0
+| where NOT is_private_ip(dest_ip)
 | prevalence enrich=true window=30d
 | where host_count < 10
-| where dest_ip != /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
 | risk score=50 entity=src_host factor="Rare process with network"
 | where host_count < 5
 | risk score=75 factor="Very rare hash"

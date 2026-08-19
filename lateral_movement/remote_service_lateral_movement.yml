@@ -34,9 +34,9 @@ source_type=windows_security OR source_type=auth_logs
 | where event_type="login" AND status="success"
 | sequence by user maxspan=1h
     fields(src_ip, dest_host, auth_type)
-    [dest_host=/^(ws|wks|workstation|desktop|laptop)/i]
-    [dest_host=/^(srv|server|app|web|db)/i]
-    [dest_host=/^(dc|domain|ad|pdc|bdc)/i]
+    [dest_host=/^ws/i OR dest_host=/^wks/i OR dest_host=/^workstation/i OR dest_host=/^desktop/i OR dest_host=/^laptop/i]
+    [dest_host=/^srv/i OR dest_host=/^server/i OR dest_host=/^app/i OR dest_host=/^web/i OR dest_host=/^db/i]
+    [dest_host=/^dc/i OR dest_host=/^domain/i OR dest_host=/^ad/i OR dest_host=/^pdc/i OR dest_host=/^bdc/i]
 | risk score=80 entity=user factor="Workstation to DC progression"
 | where sequence_duration_seconds < 300
 | risk score=90 factor="Rapid lateral movement"

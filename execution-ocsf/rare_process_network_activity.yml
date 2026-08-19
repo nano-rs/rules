@@ -32,9 +32,9 @@ ai_triage_hints:
 ---
 metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=4001 AND dst_endpoint.port > 0
+| where NOT is_private_ip(dst_endpoint.ip)
 | prevalence enrich=true window=30d
 | where host_count < 10
-| where dst_endpoint.ip != /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
 | risk score=50 entity=device.hostname factor="Rare process with network"
 | where host_count < 5
 | risk score=75 factor="Very rare hash"

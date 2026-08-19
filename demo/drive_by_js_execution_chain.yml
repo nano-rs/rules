@@ -43,7 +43,7 @@ source_type="conduit_proxy" OR source_type="windows_sysmon"
     [source_type="conduit_proxy" url CONTAINS "/downloads/" url=/\.zip(\?|$)/i]
     [source_type="windows_sysmon" file_action="create" file_path=/\.js$/i file_hash!="" prevalence_file_hash < 5]
     [source_type="windows_sysmon" event_type="process_create" process_name="wscript.exe" command_line CONTAINS ".js"]
-    [source_type="windows_sysmon" event_type="network_connection" process_name="wscript.exe" dest_port=443 dest_ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/]
+    [source_type="windows_sysmon" event_type="network_connection" process_name="wscript.exe" dest_port=443 NOT is_private_ip(dest_ip)]
     [source_type="windows_sysmon" event_type="process_create" process_name="powershell.exe" parent_process_name="wscript.exe"]
 | risk score=95 entity=user factor="Drive-by JavaScript execution chain"
 | table timestamp, user, step1_url, step1_dest_host, step2_src_host, step2_file_path, step2_file_hash, step2_prevalence_file_hash, step3_process_name, step3_command_line, step4_dest_host, step4_dest_ip, step4_dest_port, step5_process_name, step5_parent_process_name, step5_command_line, sequence_duration_seconds, risk_score, risk_factors

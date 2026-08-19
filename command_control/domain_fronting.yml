@@ -27,7 +27,9 @@ ai_triage_hints:
 ---
 source_type=proxy OR source_type=firewall
 | where dest_host CONTAINS "cloudfront.net" OR dest_host CONTAINS "azureedge.net" OR dest_host CONTAINS "googleapis.com"
-| where url NOT CONTAINS dest_host
+| eval url_host = extract_domain(url)
+| eval url_host_matches_dest = (url_host = dest_host)
+| where url_host_matches_dest = false
 | risk score=70 entity=src_host factor="Potential domain fronting"
 | prevalence enrich=true window=30d
 | where host_count < 5

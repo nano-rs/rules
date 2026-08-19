@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Small consistent payload sizes"
 ---
 source_type=firewall OR source_type=proxy OR source_type=network_flow
-| where dest_ip!=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where NOT is_private_ip(dest_ip)
 | stats count, dc(timestamp) as unique_times, min(timestamp) as timestamp by src_host, dest_ip, dest_port
 | where count > 20 AND unique_times > 15
 | prevalence enrich=true window=30d

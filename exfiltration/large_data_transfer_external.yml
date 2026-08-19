@@ -30,7 +30,7 @@ ai_triage_hints:
 ---
 source_type=firewall OR source_type=proxy OR source_type=network_flow
 | where bytes_out > 50000000
-| where dest_ip != /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where NOT is_private_ip(dest_ip)
 | eval bytes_out_mb = round(bytes_out / 1000000, 2)
 | eval hour = tonumber(strftime(timestamp, "%H"))
 | eval day = tonumber(strftime(timestamp, "%w"))

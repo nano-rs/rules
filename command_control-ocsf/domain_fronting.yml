@@ -27,7 +27,8 @@ ai_triage_hints:
 ---
 class_uid=4002
 | where dst_endpoint.hostname CONTAINS "cloudfront.net" OR dst_endpoint.hostname CONTAINS "azureedge.net" OR dst_endpoint.hostname CONTAINS "googleapis.com"
-| where http_request.url.hostname != dst_endpoint.hostname
+| eval fronted_host_matches = (http_request.url.hostname = dst_endpoint.hostname)
+| where fronted_host_matches = false
 | risk score=70 entity=src_endpoint.hostname factor="Potential domain fronting"
 | prevalence enrich=true window=30d
 | where host_count < 5
