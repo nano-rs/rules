@@ -26,7 +26,7 @@ ai_triage_hints:
 ---
 source_type=linux_audit OR source_type=auth_logs OR source_type=network_flow
 | where dest_port=22 AND event_type="network_connect"
-| where src_ip=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where is_private_ip(src_ip)
 | stats count, dc(dest_ip) as unique_dests, min(timestamp) as timestamp by src_ip, user
 | where unique_dests > 3
 | risk score=50 entity=src_ip factor="Multiple SSH destinations"

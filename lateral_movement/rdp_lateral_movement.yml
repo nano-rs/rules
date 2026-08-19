@@ -26,7 +26,7 @@ ai_triage_hints:
 ---
 source_type=firewall OR source_type=network_flow OR source_type=windows_security
 | where dest_port=3389 AND event_type="network_connect"
-| where src_ip=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/ AND dest_ip=/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
+| where is_private_ip(src_ip) AND is_private_ip(dest_ip)
 | prevalence enrich=true window=30d
 | where host_count < 5
 | risk score=55 entity=src_ip factor="Uncommon internal RDP"
