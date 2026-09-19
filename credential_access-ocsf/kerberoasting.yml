@@ -26,7 +26,7 @@ ai_triage_hints:
 ---
 metadata.log_source IN ("windows_event", "windows_security", "auth_logs") class_uid=3002
 | where metadata.event_code="4769" OR activity_id=4
-| stats count, dc(dst_endpoint.hostname) as unique_targets, values(src_endpoint.svc_name) as services, min(time) as time by user.name, src_endpoint.ip
+| stats count, dc(dst_endpoint.hostname) as unique_targets, values(unmapped.service_name) as services, min(time) as time by user.name, src_endpoint.ip
 | where count > 10 AND unique_targets > 5
 | risk score=75 entity=user.name factor="Multiple TGS requests"
 | where unique_targets > 15

@@ -25,7 +25,7 @@ ai_triage_hints:
     - "Followed by an approval outside normal hours"
 ---
 metadata.log_source IN ("okta", "azure_ad", "auth_logs") class_uid=3002
-| where is_mfa=true OR actor.session.is_mfa=true
+| where is_mfa=true
 | stats count, min(time) as time by user.name, src_endpoint.ip
 | where count > 5
 | risk score=70 entity=user.name factor="MFA push fatigue"
