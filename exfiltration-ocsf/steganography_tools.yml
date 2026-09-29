@@ -25,7 +25,6 @@ ai_triage_hints:
 ---
 class_uid=1007
 | where process.cmd_line CONTAINS "steghide" OR process.cmd_line CONTAINS "openstego" OR process.cmd_line CONTAINS "snow.exe" OR process.cmd_line CONTAINS "invisible secrets" OR process.cmd_line CONTAINS "Invoke-PSImage"
-| risk score=70 entity=device.hostname factor="Steganography tool detected"
-| where process.cmd_line CONTAINS "embed"
-| risk score=85 factor="Data embedding operation"
+| eval esc_data_embedding_operation=(lower(process.cmd_line) CONTAINS "embed")
+| risk score=min(100, 70 + if(esc_data_embedding_operation, 15, 0)) entity=device.hostname factor=concat("Steganography tool detected", if(esc_data_embedding_operation, "; Data embedding operation", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

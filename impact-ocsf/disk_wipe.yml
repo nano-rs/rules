@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1007
 | where process.name IN ("sdelete.exe", "cipher.exe", "shred", "dd") OR process.cmd_line CONTAINS "format /q" OR process.cmd_line CONTAINS "diskpart" AND process.cmd_line CONTAINS "clean"
-| risk score=80 entity=device.hostname factor="Disk wipe tool detected"
-| where process.cmd_line CONTAINS "/dev/sda" OR process.cmd_line CONTAINS "PhysicalDrive" OR process.cmd_line CONTAINS "clean all"
-| risk score=95 factor="Physical disk wipe"
+| eval esc_physical_disk_wipe=(lower(process.cmd_line) CONTAINS "/dev/sda" OR lower(process.cmd_line) CONTAINS "physicaldrive" OR lower(process.cmd_line) CONTAINS "clean all")
+| risk score=min(100, 80 + if(esc_physical_disk_wipe, 15, 0)) entity=device.hostname factor=concat("Disk wipe tool detected", if(esc_physical_disk_wipe, "; Physical disk wipe", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1005 OR class_uid=201001 OR class_uid=201002
 | where message CONTAINS "Mass Storage" OR message CONTAINS "USBSTOR" OR message CONTAINS "RemovableMedia" OR reg_key.path CONTAINS "USBSTOR" OR module.file.path CONTAINS "USBSTOR"
-| risk score=40 entity=device.hostname factor="USB mass storage connected"
-| where device.hostname CONTAINS "srv" OR device.hostname CONTAINS "server" OR device.hostname CONTAINS "dc"
-| risk score=70 factor="USB on server system"
+| eval esc_usb_on_server_system=(lower(device.hostname) CONTAINS "srv" OR lower(device.hostname) CONTAINS "server" OR lower(device.hostname) CONTAINS "dc")
+| risk score=min(100, 40 + if(esc_usb_on_server_system, 30, 0)) entity=device.hostname factor=concat("USB mass storage connected", if(esc_usb_on_server_system, "; USB on server system", ""))
 | table time, device.hostname, actor.user.name, message, reg_key.path, risk_score, risk_factors

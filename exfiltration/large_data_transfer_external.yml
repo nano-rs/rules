@@ -34,15 +34,10 @@ source_type=firewall OR source_type=proxy OR source_type=network_flow
 | eval bytes_out_mb = round(bytes_out / 1000000, 2)
 | eval hour = tonumber(strftime(timestamp, "%H"))
 | eval day = tonumber(strftime(timestamp, "%w"))
-| risk score=50 entity=src_ip factor="Large outbound transfer"
-| where bytes_out > 100000000
-| risk score=65 factor="Very large transfer (>100MB)"
-| where bytes_out > 500000000
-| risk score=80 factor="Massive transfer (>500MB)"
-| where dest_port NOT IN (80, 443, 22)
-| risk score=75 factor="Non-standard port"
-| where hour < 6 OR hour > 20
-| risk score=80 factor="Off-hours transfer"
-| where day = 0 OR day = 6
-| risk score=85 factor="Weekend transfer"
+| eval esc_very_large_transfer_100mb=(bytes_out > 100000000)
+| eval esc_massive_transfer_500mb=(bytes_out > 500000000)
+| eval esc_non_standard_port=(dest_port!=80 AND dest_port!=443 AND dest_port!=22)
+| eval esc_off_hours_transfer=(hour < 6 OR hour > 20)
+| eval esc_weekend_transfer=(day = 0 OR day = 6)
+| risk score=min(100, 50 + if(esc_very_large_transfer_100mb, 15, 0) + if(esc_massive_transfer_500mb, 15, 0) + if(esc_non_standard_port, 25, 0) + if(esc_off_hours_transfer, 30, 0) + if(esc_weekend_transfer, 35, 0)) entity=src_ip factor=concat("Large outbound transfer", if(esc_very_large_transfer_100mb, "; Very large transfer (>100MB)", ""), if(esc_massive_transfer_500mb, "; Massive transfer (>500MB)", ""), if(esc_non_standard_port, "; Non-standard port", ""), if(esc_off_hours_transfer, "; Off-hours transfer", ""), if(esc_weekend_transfer, "; Weekend transfer", ""))
 | table timestamp, src_ip, src_host, user, dest_ip, dest_port, bytes_out_mb, hour, risk_score, risk_factors

@@ -28,7 +28,6 @@ ai_triage_hints:
 class_uid=1007
 | where process.cmd_line CONTAINS ":" AND process.cmd_line CONTAINS ">" AND process.name IN ("cmd.exe", "powershell.exe")
 | where process.cmd_line=/>\s*[a-zA-Z]:\\[^:]*:[^:\\]+/
-| risk score=55 entity=device.hostname factor="ADS creation detected"
-| where process.cmd_line CONTAINS "type" OR process.cmd_line CONTAINS "echo"
-| risk score=70 factor="Data hidden in ADS"
+| eval esc_data_hidden_in_ads=(lower(process.cmd_line) CONTAINS "type" OR lower(process.cmd_line) CONTAINS "echo")
+| risk score=min(100, 55 + if(esc_data_hidden_in_ads, 15, 0)) entity=device.hostname factor=concat("ADS creation detected", if(esc_data_hidden_in_ads, "; Data hidden in ADS", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

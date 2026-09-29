@@ -29,7 +29,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where process_path=/^[D-Z]:/
 | where process_name=/(\.exe|\.lnk|\.bat|\.cmd|\.vbs|\.js|\.ps1)$/i
-| risk score=65 entity=src_host factor="Execution from mounted image"
-| where parent_process_name="explorer.exe"
-| risk score=80 factor="User-initiated ISO execution"
+| eval esc_user_initiated_iso_execution=(lower(parent_process_name)="explorer.exe")
+| risk score=min(100, 65 + if(esc_user_initiated_iso_execution, 15, 0)) entity=src_host factor=concat("Execution from mounted image", if(esc_user_initiated_iso_execution, "; User-initiated ISO execution", ""))
 | table timestamp, src_host, user, process_name, process_path, parent_process_name, command_line, risk_score, risk_factors
