@@ -27,7 +27,6 @@ ai_triage_hints:
 metadata.log_source IN ("endpoint_edr", "windows_sysmon") class_uid=1007 activity_id=1
 | where actor.process.name IN ("chrome.exe", "firefox.exe", "msedge.exe", "iexplore.exe", "brave.exe")
 | where process.name IN ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "rundll32.exe", "regsvr32.exe", "mshta.exe")
-| risk score=85 entity=device.hostname factor="Browser spawned shell"
-| where process.name="powershell.exe" AND process.cmd_line CONTAINS "-enc"
-| risk score=95 factor="Browser spawned encoded PowerShell"
+| eval esc_browser_spawned_encoded_powershell=(lower(process.name)="powershell.exe" AND lower(process.cmd_line) CONTAINS "-enc")
+| risk score=min(100, 85 + if(esc_browser_spawned_encoded_powershell, 10, 0)) entity=device.hostname factor=concat("Browser spawned shell", if(esc_browser_spawned_encoded_powershell, "; Browser spawned encoded PowerShell", ""))
 | table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, risk_factors

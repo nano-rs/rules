@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007
 | where (process.name="curl.exe" OR process.name="wget.exe" OR process.name="Invoke-WebRequest") AND process.cmd_line CONTAINS "base64"
 | where process.cmd_line CONTAINS "http"
-| risk score=60 entity=device.hostname factor="Encoded data transfer"
-| where process.cmd_line CONTAINS "POST"
-| risk score=75 factor="Encoded POST to external"
+| eval esc_encoded_post_to_external=(lower(process.cmd_line) CONTAINS "post")
+| risk score=min(100, 60 + if(esc_encoded_post_to_external, 15, 0)) entity=device.hostname factor=concat("Encoded data transfer", if(esc_encoded_post_to_external, "; Encoded POST to external", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

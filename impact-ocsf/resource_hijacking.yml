@@ -25,7 +25,6 @@ ai_triage_hints:
 ---
 class_uid=1007
 | where process.cmd_line CONTAINS "stratum" OR process.cmd_line CONTAINS "xmrig" OR process.cmd_line CONTAINS "minerd" OR process.cmd_line CONTAINS "cpuminer" OR process.cmd_line CONTAINS "cryptonight" OR process.cmd_line CONTAINS "pool.minergate"
-| risk score=70 entity=device.hostname factor="Cryptomining detected"
-| where device.hostname CONTAINS "srv" OR device.hostname CONTAINS "server" OR device.hostname CONTAINS "prod"
-| risk score=85 factor="Mining on server"
+| eval esc_mining_on_server=(lower(device.hostname) CONTAINS "srv" OR lower(device.hostname) CONTAINS "server" OR lower(device.hostname) CONTAINS "prod")
+| risk score=min(100, 70 + if(esc_mining_on_server, 15, 0)) entity=device.hostname factor=concat("Cryptomining detected", if(esc_mining_on_server, "; Mining on server", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

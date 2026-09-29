@@ -28,7 +28,6 @@ class_uid=4001 OR class_uid=4002
 | where email.subject!="" AND traffic.bytes_out > 5000000
 | where dst_endpoint.hostname CONTAINS "gmail.com" OR dst_endpoint.hostname CONTAINS "yahoo.com" OR dst_endpoint.hostname CONTAINS "hotmail.com" OR dst_endpoint.hostname CONTAINS "protonmail.com"
 | eval bytes_out_mb = round(traffic.bytes_out / 1000000, 2)
-| risk score=55 entity=email.from factor="Large email to personal domain"
-| where traffic.bytes_out > 20000000
-| risk score=75 factor="Very large attachment (>20MB)"
+| eval esc_very_large_attachment_20mb=(traffic.bytes_out > 20000000)
+| risk score=min(100, 55 + if(esc_very_large_attachment_20mb, 20, 0)) entity=email.from factor=concat("Large email to personal domain", if(esc_very_large_attachment_20mb, "; Very large attachment (>20MB)", ""))
 | table time, email.from, src_endpoint.hostname, dst_endpoint.hostname, bytes_out_mb, email.subject, risk_score, risk_factors
