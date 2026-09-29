@@ -29,8 +29,7 @@ class_uid=4002
 | where dst_endpoint.hostname CONTAINS "cloudfront.net" OR dst_endpoint.hostname CONTAINS "azureedge.net" OR dst_endpoint.hostname CONTAINS "googleapis.com"
 | eval fronted_host_matches = (http_request.url.hostname = dst_endpoint.hostname)
 | where fronted_host_matches = false
-| risk score=70 entity=src_endpoint.hostname factor="Potential domain fronting"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=85 factor="Rare fronted destination"
+| eval esc_rare_fronted_destination=(host_count < 5)
+| risk score=min(100, 70 + if(esc_rare_fronted_destination, 15, 0)) entity=src_endpoint.hostname factor=concat("Potential domain fronting", if(esc_rare_fronted_destination, "; Rare fronted destination", ""))
 | table time, src_endpoint.hostname, src_endpoint.ip, dst_endpoint.hostname, http_request.url.hostname, http_request.url.url_string, host_count, risk_score, risk_factors

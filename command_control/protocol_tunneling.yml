@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where command_line CONTAINS "chisel" OR command_line CONTAINS "ngrok" OR command_line CONTAINS "plink" OR command_line CONTAINS "proxychains" OR command_line CONTAINS "socat" OR command_line CONTAINS "iodine" OR command_line CONTAINS "dnscat"
-| risk score=80 entity=src_host factor="Tunneling tool detected"
-| where command_line CONTAINS "http" OR command_line CONTAINS "socks"
-| risk score=85 factor="Active tunnel configuration"
+| eval esc_active_tunnel_configuration=(lower(command_line) CONTAINS "http" OR lower(command_line) CONTAINS "socks")
+| risk score=min(100, 80 + if(esc_active_tunnel_configuration, 5, 0)) entity=src_host factor=concat("Tunneling tool detected", if(esc_active_tunnel_configuration, "; Active tunnel configuration", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

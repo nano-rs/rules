@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1007
 | where process.cmd_line CONTAINS "chisel" OR process.cmd_line CONTAINS "ngrok" OR process.cmd_line CONTAINS "plink" OR process.cmd_line CONTAINS "proxychains" OR process.cmd_line CONTAINS "socat" OR process.cmd_line CONTAINS "iodine" OR process.cmd_line CONTAINS "dnscat"
-| risk score=80 entity=device.hostname factor="Tunneling tool detected"
-| where process.cmd_line CONTAINS "http" OR process.cmd_line CONTAINS "socks"
-| risk score=85 factor="Active tunnel configuration"
+| eval esc_active_tunnel_configuration=(lower(process.cmd_line) CONTAINS "http" OR lower(process.cmd_line) CONTAINS "socks")
+| risk score=min(100, 80 + if(esc_active_tunnel_configuration, 5, 0)) entity=device.hostname factor=concat("Tunneling tool detected", if(esc_active_tunnel_configuration, "; Active tunnel configuration", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors
