@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 source_type=windows_security OR source_type=windows_sysmon
 | where event_type="log_clear" OR (process_name="wevtutil.exe" AND command_line CONTAINS "cl") OR (process_name="powershell.exe" AND command_line CONTAINS "Clear-EventLog")
-| risk score=85 entity=src_host factor="Event log cleared"
-| where command_line CONTAINS "Security" OR command_line CONTAINS "System"
-| risk score=95 factor="Security log cleared"
+| eval esc_security_log_cleared=(lower(command_line) CONTAINS "security" OR lower(command_line) CONTAINS "system")
+| risk score=min(100, 85 + if(esc_security_log_cleared, 10, 0)) entity=src_host factor=concat("Event log cleared", if(esc_security_log_cleared, "; Security log cleared", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

@@ -27,9 +27,7 @@ ai_triage_hints:
 class_uid=1007 activity_id=1
 | where process.name="netsh.exe" AND process.cmd_line CONTAINS "firewall"
 | where process.cmd_line CONTAINS "add" OR process.cmd_line CONTAINS "set" OR process.cmd_line CONTAINS "disable"
-| risk score=50 entity=device.hostname factor="Firewall rule modified"
-| where process.cmd_line CONTAINS "disable" AND process.cmd_line CONTAINS "profile"
-| risk score=80 factor="Firewall profile disabled"
-| where process.cmd_line CONTAINS "allow" AND process.cmd_line CONTAINS "any"
-| risk score=75 factor="Broad allow rule added"
+| eval esc_firewall_profile_disabled=(lower(process.cmd_line) CONTAINS "disable" AND lower(process.cmd_line) CONTAINS "profile")
+| eval esc_broad_allow_rule_added=(lower(process.cmd_line) CONTAINS "allow" AND lower(process.cmd_line) CONTAINS "any")
+| risk score=min(100, 50 + if(esc_firewall_profile_disabled, 30, 0) + if(esc_broad_allow_rule_added, 25, 0)) entity=device.hostname factor=concat("Firewall rule modified", if(esc_firewall_profile_disabled, "; Firewall profile disabled", ""), if(esc_broad_allow_rule_added, "; Broad allow rule added", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

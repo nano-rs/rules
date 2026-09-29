@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007 activity_id=1
 | where process.name IN ("net.exe", "net1.exe") AND process.cmd_line CONTAINS "group"
 | where process.cmd_line CONTAINS "domain admins" OR process.cmd_line CONTAINS "enterprise admins" OR process.cmd_line CONTAINS "schema admins" OR process.cmd_line CONTAINS "administrators"
-| risk score=55 entity=device.hostname factor="Admin group enumeration"
-| where process.cmd_line CONTAINS "/domain"
-| risk score=70 factor="Domain admin group query"
+| eval esc_domain_admin_group_query=(lower(process.cmd_line) CONTAINS "/domain")
+| risk score=min(100, 55 + if(esc_domain_admin_group_query, 15, 0)) entity=device.hostname factor=concat("Admin group enumeration", if(esc_domain_admin_group_query, "; Domain admin group query", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

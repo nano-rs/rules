@@ -38,7 +38,6 @@ class_uid=1007 activity_id=1
     [process.name IN ("whoami.exe", "hostname.exe", "systeminfo.exe")]
     [process.name IN ("ipconfig.exe", "netstat.exe", "arp.exe", "route.exe")]
     [process.name IN ("net.exe", "nltest.exe", "nslookup.exe") process.cmd_line=/(view|user|group|domain|query)/i]
-| risk score=55 entity=device.hostname factor="Reconnaissance sequence"
-| where sequence_duration_seconds < 60
-| risk score=75 factor="Rapid enumeration"
+| eval esc_rapid_enumeration=(sequence_duration_seconds < 60)
+| risk score=min(100, 55 + if(esc_rapid_enumeration, 20, 0)) entity=device.hostname factor=concat("Reconnaissance sequence", if(esc_rapid_enumeration, "; Rapid enumeration", ""))
 | table actor.user.name, device.hostname, step1_process_name, step1_process_cmd_line, step2_process_name, step2_process_cmd_line, step3_process_name, step3_process_cmd_line, sequence_duration_seconds, risk_score, risk_factors

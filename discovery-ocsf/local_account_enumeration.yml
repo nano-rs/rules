@@ -27,7 +27,6 @@ class_uid=1007 activity_id=1
 | where process.name="net.exe" OR process.name="net1.exe"
 | where process.cmd_line CONTAINS "user" OR process.cmd_line CONTAINS "localgroup" OR process.cmd_line CONTAINS "group"
 | where process.cmd_line NOT CONTAINS "/add" AND process.cmd_line NOT CONTAINS "/delete"
-| risk score=35 entity=device.hostname factor="Account enumeration"
-| where process.cmd_line CONTAINS "domain"
-| risk score=55 factor="Domain account enumeration"
+| eval esc_domain_account_enumeration=(lower(process.cmd_line) CONTAINS "domain")
+| risk score=min(100, 35 + if(esc_domain_account_enumeration, 20, 0)) entity=device.hostname factor=concat("Account enumeration", if(esc_domain_account_enumeration, "; Domain account enumeration", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors
