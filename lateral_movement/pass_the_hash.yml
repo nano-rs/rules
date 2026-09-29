@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=windows_security OR source_type=auth_logs
 | where event_type="login" AND auth_type="ntlm" AND status="success"
 | where user CONTAINS "admin" OR user CONTAINS "svc"
-| risk score=60 entity=user factor="NTLM auth for privileged account"
-| where src_host CONTAINS "ws" OR src_host CONTAINS "desktop"
-| risk score=80 factor="Admin NTLM from workstation"
+| eval esc_admin_ntlm_from_workstation=(lower(src_host) CONTAINS "ws" OR lower(src_host) CONTAINS "desktop")
+| risk score=min(100, 60 + if(esc_admin_ntlm_from_workstation, 20, 0)) entity=user factor=concat("NTLM auth for privileged account", if(esc_admin_ntlm_from_workstation, "; Admin NTLM from workstation", ""))
 | table timestamp, user, src_ip, src_host, dest_host, auth_type, risk_score, risk_factors

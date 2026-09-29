@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007 activity_id=1
 | where actor.process.name="wmiprvse.exe"
 | where process.name IN ("cmd.exe", "powershell.exe", "pwsh.exe", "mshta.exe", "rundll32.exe")
-| risk score=70 entity=device.hostname factor="WMI remote execution"
-| where process.cmd_line CONTAINS "-enc" OR process.cmd_line CONTAINS "IEX" OR process.cmd_line CONTAINS "downloadstring"
-| risk score=90 factor="Suspicious WMI payload"
+| eval esc_suspicious_wmi_payload=(lower(process.cmd_line) CONTAINS "-enc" OR lower(process.cmd_line) CONTAINS "iex" OR lower(process.cmd_line) CONTAINS "downloadstring")
+| risk score=min(100, 70 + if(esc_suspicious_wmi_payload, 20, 0)) entity=device.hostname factor=concat("WMI remote execution", if(esc_suspicious_wmi_payload, "; Suspicious WMI payload", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

@@ -27,9 +27,7 @@ ai_triage_hints:
 ---
 class_uid=1007 activity_id=1
 | where actor.process.name="wsmprovhost.exe"
-| risk score=50 entity=device.hostname factor="WinRM remote execution"
-| where process.name IN ("cmd.exe", "powershell.exe")
-| risk score=65 factor="Shell via WinRM"
-| where process.cmd_line CONTAINS "-enc" OR process.cmd_line CONTAINS "IEX" OR process.cmd_line CONTAINS "downloadstring"
-| risk score=85 factor="Suspicious WinRM payload"
+| eval esc_shell_via_winrm=(lower(process.name)="cmd.exe" OR lower(process.name)="powershell.exe")
+| eval esc_suspicious_winrm_payload=(lower(process.cmd_line) CONTAINS "-enc" OR lower(process.cmd_line) CONTAINS "iex" OR lower(process.cmd_line) CONTAINS "downloadstring")
+| risk score=min(100, 50 + if(esc_shell_via_winrm, 15, 0) + if(esc_suspicious_winrm_payload, 35, 0)) entity=device.hostname factor=concat("WinRM remote execution", if(esc_shell_via_winrm, "; Shell via WinRM", ""), if(esc_suspicious_winrm_payload, "; Suspicious WinRM payload", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

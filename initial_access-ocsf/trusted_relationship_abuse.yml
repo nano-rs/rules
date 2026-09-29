@@ -26,11 +26,9 @@ ai_triage_hints:
 ---
 metadata.log_source IN ("vpn_logs", "firewall", "auth_logs", "windows_event") class_uid=3002 activity_id=1 status="Success"
 | where user.name CONTAINS "vendor" OR user.name CONTAINS "partner" OR user.name CONTAINS "contractor" OR user.name CONTAINS "ext_"
-| risk score=35 entity=user.name factor="Third-party access"
 | eval hour = tonumber(strftime(time, "%H"))
-| where hour < 7 OR hour > 19
-| risk score=65 factor="Off-hours third-party access"
 | eval day = tonumber(strftime(time, "%w"))
-| where day = 0 OR day = 6
-| risk score=75 factor="Weekend third-party access"
+| eval esc_off_hours_third_party_access=(hour < 7 OR hour > 19)
+| eval esc_weekend_third_party_access=(day = 0 OR day = 6)
+| risk score=min(100, 35 + if(esc_off_hours_third_party_access, 30, 0) + if(esc_weekend_third_party_access, 40, 0)) entity=user.name factor=concat("Third-party access", if(esc_off_hours_third_party_access, "; Off-hours third-party access", ""), if(esc_weekend_third_party_access, "; Weekend third-party access", ""))
 | table time, user.name, src_endpoint.ip, dst_endpoint.hostname, hour, risk_score, risk_factors
