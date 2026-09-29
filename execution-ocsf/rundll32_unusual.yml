@@ -28,7 +28,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where process.name="rundll32.exe"
 | where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR process.cmd_line CONTAINS "Downloads" OR process.cmd_line CONTAINS "ProgramData"
-| risk score=60 entity=device.hostname factor="Rundll32 unusual path"
-| where process.cmd_line CONTAINS "javascript" OR process.cmd_line CONTAINS "vbscript"
-| risk score=90 factor="Script protocol handler"
-| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_script_protocol_handler=(lower(process.cmd_line) CONTAINS "javascript" OR lower(process.cmd_line) CONTAINS "vbscript")
+| risk score=min(100, 60 + if(esc_script_protocol_handler, 30, 0)) entity=device.hostname factor=concat("Rundll32 unusual path", if(esc_script_protocol_handler, "; Script protocol handler", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, risk_factors

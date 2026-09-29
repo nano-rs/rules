@@ -35,9 +35,9 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security" O
 | where class_uid=1007 AND activity_id=1
 | where process.name="powershell.exe" OR process.name="pwsh.exe"
 | where process.cmd_line=/-e(nc(odedcommand)?)?\s/i OR process.cmd_line CONTAINS "IEX" OR process.cmd_line CONTAINS "Invoke-Expression" OR process.cmd_line CONTAINS "downloadstring"
-| risk score=50 entity=device.hostname factor="Suspicious PowerShell"
-| risk score=if(match(process.cmd_line, "(?i)-enc"), 20, 0) factor=if(match(process.cmd_line, "(?i)-enc"), "Encoded command", null())
-| risk score=if(match(process.cmd_line, "(?i)iex|invoke-expression"), 35, 0) factor=if(match(process.cmd_line, "(?i)iex|invoke-expression"), "Download cradle", null())
-| risk score=if(match(process.cmd_line, "(?i)amsi"), 45, 0) factor=if(match(process.cmd_line, "(?i)amsi"), "AMSI bypass attempt", null())
-| risk score=if(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe", 45, 0) factor=if(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe", "Office parent process", null())
+| eval esc_encoded_command=match(process.cmd_line, "(?i)-enc")
+| eval esc_download_cradle=match(process.cmd_line, "(?i)iex|invoke-expression")
+| eval esc_amsi_bypass_attempt=match(process.cmd_line, "(?i)amsi")
+| eval esc_office_parent_process=(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe")
+| risk score=min(100, 50 + if(esc_encoded_command, 20, 0) + if(esc_download_cradle, 35, 0) + if(esc_amsi_bypass_attempt, 45, 0) + if(esc_office_parent_process, 45, 0)) entity=device.hostname factor=concat("Suspicious PowerShell", if(esc_encoded_command, "; Encoded command", ""), if(esc_download_cradle, "; Download cradle", ""), if(esc_amsi_bypass_attempt, "; AMSI bypass attempt", ""), if(esc_office_parent_process, "; Office parent process", ""))
 | table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, risk_factors

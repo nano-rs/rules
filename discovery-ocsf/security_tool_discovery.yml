@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1007 activity_id=1
 | where process.cmd_line CONTAINS "AntiVirusProduct" OR process.cmd_line CONTAINS "SecurityCenter" OR (process.name="wmic.exe" AND process.cmd_line CONTAINS "antivirus") OR process.cmd_line CONTAINS "Get-MpComputerStatus"
-| risk score=50 entity=device.hostname factor="Security tool discovery"
-| where process.name IN ("powershell.exe", "cmd.exe", "wscript.exe")
-| risk score=70 factor="Script-based security recon"
+| eval esc_script_based_security_recon=(lower(process.name)="powershell.exe" OR lower(process.name)="cmd.exe" OR lower(process.name)="wscript.exe")
+| risk score=min(100, 50 + if(esc_script_based_security_recon, 20, 0)) entity=device.hostname factor=concat("Security tool discovery", if(esc_script_based_security_recon, "; Script-based security recon", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

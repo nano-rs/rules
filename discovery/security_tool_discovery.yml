@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where command_line CONTAINS "AntiVirusProduct" OR command_line CONTAINS "SecurityCenter" OR (process_name="wmic.exe" AND command_line CONTAINS "antivirus") OR command_line CONTAINS "Get-MpComputerStatus"
-| risk score=50 entity=src_host factor="Security tool discovery"
-| where process_name IN ("powershell.exe", "cmd.exe", "wscript.exe")
-| risk score=70 factor="Script-based security recon"
+| eval esc_script_based_security_recon=(lower(process_name)="powershell.exe" OR lower(process_name)="cmd.exe" OR lower(process_name)="wscript.exe")
+| risk score=min(100, 50 + if(esc_script_based_security_recon, 20, 0)) entity=src_host factor=concat("Security tool discovery", if(esc_script_based_security_recon, "; Script-based security recon", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors
