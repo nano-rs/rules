@@ -27,8 +27,6 @@ ai_triage_hints:
 metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security"
 | where metadata.event_code IN ("4697", "7045") OR process.name="sc.exe"
 | risk score=50 entity=device.hostname factor="New service created"
-| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR process.cmd_line CONTAINS "ProgramData" OR message CONTAINS "Temp" OR message CONTAINS "AppData" OR message CONTAINS "ProgramData"
-| risk score=75 factor="Suspicious binary path"
-| where process.cmd_line CONTAINS "powershell" OR process.cmd_line CONTAINS "cmd /c" OR message CONTAINS "powershell" OR message CONTAINS "cmd /c"
-| risk score=85 factor="Shell in service command"
-| table time, device.hostname, actor.user.name, process.name, process.cmd_line, metadata.event_code, risk_score, unmapped.risk_factors
+| risk score=if(match(process.cmd_line, "(?i)temp|appdata|programdata") OR match(message, "(?i)temp|appdata|programdata"), 25, 0) factor=if(match(process.cmd_line, "(?i)temp|appdata|programdata") OR match(message, "(?i)temp|appdata|programdata"), "Suspicious binary path", null())
+| risk score=if(match(process.cmd_line, "(?i)powershell|cmd /c") OR match(message, "(?i)powershell|cmd /c"), 35, 0) factor=if(match(process.cmd_line, "(?i)powershell|cmd /c") OR match(message, "(?i)powershell|cmd /c"), "Shell in service command", null())
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, metadata.event_code, risk_score, risk_factors
