@@ -27,7 +27,6 @@ ai_triage_hints:
 metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr"
 | where class_uid=1001 AND (activity_id=1 OR activity_id=3)
 | where file.path CONTAINS "authorized_keys"
-| risk score=70 entity=device.hostname factor="SSH authorized_keys modified"
-| where actor.user.name != "root" AND actor.user.name != "ansible" AND actor.user.name != "puppet"
-| risk score=85 factor="Non-admin modified SSH keys"
-| table time, device.hostname, actor.user.name, file.path, actor.process.name, actor.process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_non_admin_modified_ssh_keys=(lower(actor.user.name)!="root" AND lower(actor.user.name)!="ansible" AND lower(actor.user.name)!="puppet")
+| risk score=min(100, 70 + if(esc_non_admin_modified_ssh_keys, 15, 0)) entity=device.hostname factor=concat("SSH authorized_keys modified", if(esc_non_admin_modified_ssh_keys, "; Non-admin modified SSH keys", ""))
+| table time, device.hostname, actor.user.name, file.path, actor.process.name, actor.process.cmd_line, risk_score, risk_factors

@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=windows_sysmon
 | where event_type="wmi_event" OR (process_name="wmic.exe" AND command_line CONTAINS "subscription")
 | where command_line CONTAINS "CommandLineEventConsumer" OR command_line CONTAINS "__EventFilter" OR command_line CONTAINS "ActiveScriptEventConsumer"
-| risk score=80 entity=src_host factor="WMI event subscription"
-| where command_line CONTAINS "powershell" OR command_line CONTAINS "cmd.exe"
-| risk score=90 factor="Shell in WMI consumer"
+| eval esc_shell_in_wmi_consumer=(lower(command_line) CONTAINS "powershell" OR lower(command_line) CONTAINS "cmd.exe")
+| risk score=min(100, 80 + if(esc_shell_in_wmi_consumer, 10, 0)) entity=src_host factor=concat("WMI event subscription", if(esc_shell_in_wmi_consumer, "; Shell in WMI consumer", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

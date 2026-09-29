@@ -28,7 +28,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where (process.name="fodhelper.exe" OR process.name="computerdefaults.exe" OR process.name="sdclt.exe" OR process.name="eventvwr.exe")
 | where actor.process.name NOT IN ("explorer.exe", "svchost.exe")
-| risk score=80 entity=device.hostname factor="Potential UAC bypass"
-| where actor.process.name IN ("cmd.exe", "powershell.exe", "pwsh.exe")
-| risk score=90 factor="Shell-initiated UAC bypass"
-| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_shell_initiated_uac_bypass=(lower(actor.process.name)="cmd.exe" OR lower(actor.process.name)="powershell.exe" OR lower(actor.process.name)="pwsh.exe")
+| risk score=min(100, 80 + if(esc_shell_initiated_uac_bypass, 10, 0)) entity=device.hostname factor=concat("Potential UAC bypass", if(esc_shell_initiated_uac_bypass, "; Shell-initiated UAC bypass", ""))
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, risk_factors

@@ -26,9 +26,7 @@ ai_triage_hints:
 ---
 source_type=windows_sysmon OR source_type=windows_security
 | where event_type="service_create" OR (process_name="sc.exe" AND command_line CONTAINS "create")
-| risk score=50 entity=src_host factor="New service created"
-| where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData" OR command_line CONTAINS "ProgramData"
-| risk score=75 factor="Suspicious binary path"
-| where command_line CONTAINS "powershell" OR command_line CONTAINS "cmd /c"
-| risk score=85 factor="Shell in service command"
+| eval esc_suspicious_binary_path=(lower(command_line) CONTAINS "temp" OR lower(command_line) CONTAINS "appdata" OR lower(command_line) CONTAINS "programdata")
+| eval esc_shell_in_service_command=(lower(command_line) CONTAINS "powershell" OR lower(command_line) CONTAINS "cmd /c")
+| risk score=min(100, 50 + if(esc_suspicious_binary_path, 25, 0) + if(esc_shell_in_service_command, 35, 0)) entity=src_host factor=concat("New service created", if(esc_suspicious_binary_path, "; Suspicious binary path", ""), if(esc_shell_in_service_command, "; Shell in service command", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors
