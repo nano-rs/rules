@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1007 activity_id=1
 | where (process.name="sysmon.exe" OR process.name="sysmon64.exe") AND (process.cmd_line CONTAINS "-u" OR process.cmd_line CONTAINS "/u")
-| risk score=90 entity=device.hostname factor="Sysmon uninstall attempt"
-| where process.cmd_line CONTAINS "force"
-| risk score=95 factor="Forced Sysmon uninstall"
+| eval esc_forced_sysmon_uninstall=(lower(process.cmd_line) CONTAINS "force")
+| risk score=min(100, 90 + if(esc_forced_sysmon_uninstall, 5, 0)) entity=device.hostname factor=concat("Sysmon uninstall attempt", if(esc_forced_sysmon_uninstall, "; Forced Sysmon uninstall", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

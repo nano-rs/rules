@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where (process_name="sysmon.exe" OR process_name="sysmon64.exe") AND (command_line CONTAINS "-u" OR command_line CONTAINS "/u")
-| risk score=90 entity=src_host factor="Sysmon uninstall attempt"
-| where command_line CONTAINS "force"
-| risk score=95 factor="Forced Sysmon uninstall"
+| eval esc_forced_sysmon_uninstall=(lower(command_line) CONTAINS "force")
+| risk score=min(100, 90 + if(esc_forced_sysmon_uninstall, 5, 0)) entity=src_host factor=concat("Sysmon uninstall attempt", if(esc_forced_sysmon_uninstall, "; Forced Sysmon uninstall", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

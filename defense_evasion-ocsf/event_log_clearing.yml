@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 metadata.log_source="windows_event" OR metadata.log_source="windows_sysmon"
 | where metadata.event_code="1102" OR metadata.event_code="104" OR (process.name="wevtutil.exe" AND process.cmd_line CONTAINS "cl") OR (process.name="powershell.exe" AND process.cmd_line CONTAINS "Clear-EventLog")
-| risk score=85 entity=device.hostname factor="Event log cleared"
-| where process.cmd_line CONTAINS "Security" OR process.cmd_line CONTAINS "System" OR metadata.log_name="Security" OR metadata.log_name="System"
-| risk score=95 factor="Security log cleared"
+| eval esc_security_log_cleared=(lower(process.cmd_line) CONTAINS "security" OR lower(process.cmd_line) CONTAINS "system" OR lower(metadata.log_name)="security" OR lower(metadata.log_name)="system")
+| risk score=min(100, 85 + if(esc_security_log_cleared, 10, 0)) entity=device.hostname factor=concat("Event log cleared", if(esc_security_log_cleared, "; Security log cleared", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, metadata.event_code, metadata.log_name, risk_score, risk_factors
