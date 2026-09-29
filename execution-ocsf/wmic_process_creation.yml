@@ -28,7 +28,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where process.name="wmic.exe"
 | where process.cmd_line CONTAINS "/node:" AND process.cmd_line CONTAINS "process" AND process.cmd_line CONTAINS "call" AND process.cmd_line CONTAINS "create"
-| risk score=75 entity=device.hostname factor="Remote WMIC process creation"
-| where process.cmd_line CONTAINS "powershell" OR process.cmd_line CONTAINS "cmd.exe"
-| risk score=90 factor="Shell spawned via WMIC"
-| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_shell_spawned_via_wmic=(lower(process.cmd_line) CONTAINS "powershell" OR lower(process.cmd_line) CONTAINS "cmd.exe")
+| risk score=min(100, 75 + if(esc_shell_spawned_via_wmic, 15, 0)) entity=device.hostname factor=concat("Remote WMIC process creation", if(esc_shell_spawned_via_wmic, "; Shell spawned via WMIC", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

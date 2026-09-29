@@ -28,9 +28,7 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="mshta.exe"
 | where command_line CONTAINS "http" OR command_line CONTAINS "javascript:" OR command_line CONTAINS "vbscript:" OR command_line CONTAINS "Temp"
-| risk score=70 entity=src_host factor="Suspicious mshta execution"
-| where command_line CONTAINS "http://" OR command_line CONTAINS "https://"
-| risk score=85 factor="Remote HTA execution"
-| where parent_process_name IN ("winword.exe", "excel.exe", "outlook.exe")
-| risk score=95 factor="Office parent process"
+| eval esc_remote_hta_execution=(lower(command_line) CONTAINS "http://" OR lower(command_line) CONTAINS "https://")
+| eval esc_office_parent_process=(lower(parent_process_name)="winword.exe" OR lower(parent_process_name)="excel.exe" OR lower(parent_process_name)="outlook.exe")
+| risk score=min(100, 70 + if(esc_remote_hta_execution, 15, 0) + if(esc_office_parent_process, 25, 0)) entity=src_host factor=concat("Suspicious mshta execution", if(esc_remote_hta_execution, "; Remote HTA execution", ""), if(esc_office_parent_process, "; Office parent process", ""))
 | table timestamp, src_host, user, parent_process_name, command_line, risk_score, risk_factors

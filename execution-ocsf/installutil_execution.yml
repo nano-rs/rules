@@ -28,7 +28,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where process.name="InstallUtil.exe"
 | where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR process.cmd_line CONTAINS "/U" OR process.cmd_line CONTAINS "/LogFile="
-| risk score=75 entity=device.hostname factor="Suspicious InstallUtil execution"
-| where process.cmd_line CONTAINS "/U"
-| risk score=85 factor="Uninstall parameter abuse"
-| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_uninstall_parameter_abuse=(lower(process.cmd_line) CONTAINS "/u")
+| risk score=min(100, 75 + if(esc_uninstall_parameter_abuse, 10, 0)) entity=device.hostname factor=concat("Suspicious InstallUtil execution", if(esc_uninstall_parameter_abuse, "; Uninstall parameter abuse", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

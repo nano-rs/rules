@@ -29,7 +29,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where process.name="msdt.exe"
 | where process.cmd_line CONTAINS "PCWDiagnostic" OR process.cmd_line CONTAINS "IT_BrowseForFile" OR process.cmd_line CONTAINS "ms-msdt:"
-| risk score=90 entity=device.hostname factor="MSDT abuse (Follina-like)"
-| where actor.process.name IN ("winword.exe", "excel.exe", "outlook.exe")
-| risk score=95 factor="Office parent - likely exploitation"
-| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_office_parent_likely_exploitation=(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe")
+| risk score=min(100, 90 + if(esc_office_parent_likely_exploitation, 5, 0)) entity=device.hostname factor=concat("MSDT abuse (Follina-like)", if(esc_office_parent_likely_exploitation, "; Office parent - likely exploitation", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, risk_factors

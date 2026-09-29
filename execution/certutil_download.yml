@@ -32,7 +32,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where process_name="certutil.exe"
 | where command_line CONTAINS "-urlcache" OR command_line CONTAINS "-verifyctl" OR command_line CONTAINS "url"
 | where command_line CONTAINS "http"
-| risk score=80 entity=src_host factor="Certutil file download"
-| where command_line CONTAINS ".exe" OR command_line CONTAINS ".dll" OR command_line CONTAINS ".ps1"
-| risk score=90 factor="Executable download"
+| eval esc_executable_download=(lower(command_line) CONTAINS ".exe" OR lower(command_line) CONTAINS ".dll" OR lower(command_line) CONTAINS ".ps1")
+| risk score=min(100, 80 + if(esc_executable_download, 10, 0)) entity=src_host factor=concat("Certutil file download", if(esc_executable_download, "; Executable download", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

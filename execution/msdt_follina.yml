@@ -29,7 +29,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="msdt.exe"
 | where command_line CONTAINS "PCWDiagnostic" OR command_line CONTAINS "IT_BrowseForFile" OR command_line CONTAINS "ms-msdt:"
-| risk score=90 entity=src_host factor="MSDT abuse (Follina-like)"
-| where parent_process_name IN ("winword.exe", "excel.exe", "outlook.exe")
-| risk score=95 factor="Office parent - likely exploitation"
+| eval esc_office_parent_likely_exploitation=(lower(parent_process_name)="winword.exe" OR lower(parent_process_name)="excel.exe" OR lower(parent_process_name)="outlook.exe")
+| risk score=min(100, 90 + if(esc_office_parent_likely_exploitation, 5, 0)) entity=src_host factor=concat("MSDT abuse (Follina-like)", if(esc_office_parent_likely_exploitation, "; Office parent - likely exploitation", ""))
 | table timestamp, src_host, user, parent_process_name, command_line, risk_score, risk_factors
