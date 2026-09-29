@@ -28,8 +28,7 @@ ai_triage_hints:
 metadata.log_source="windows_security" OR metadata.log_source="auth_logs"
 | where metadata.event_code IN ("5136", "5137", "5141")
 | where message CONTAINS "groupPolicyContainer" OR message CONTAINS "GPC" OR message CONTAINS "Group Policy"
-| risk score=60 entity=actor.user.name factor="GPO modified"
 | eval hour = tonumber(strftime(time, "%H"))
-| where hour < 7 OR hour > 19
-| risk score=80 factor="Off-hours GPO change"
-| table time, actor.user.name, device.hostname, dst_endpoint.hostname, message, risk_score, unmapped.risk_factors
+| eval esc_off_hours_gpo_change=(hour < 7 OR hour > 19)
+| risk score=min(100, 60 + if(esc_off_hours_gpo_change, 20, 0)) entity=actor.user.name factor=concat("GPO modified", if(esc_off_hours_gpo_change, "; Off-hours GPO change", ""))
+| table time, actor.user.name, device.hostname, dst_endpoint.hostname, message, risk_score, risk_factors

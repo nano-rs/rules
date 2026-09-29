@@ -28,9 +28,7 @@ source_type=linux_audit OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="sudo"
 | where command_line CONTAINS "bash" OR command_line CONTAINS "sh -c" OR command_line CONTAINS "python" OR command_line CONTAINS "perl"
-| risk score=45 entity=src_host factor="Sudo shell execution"
-| where command_line CONTAINS "-u" AND command_line NOT CONTAINS "-u root"
-| risk score=70 factor="Sudo to non-root user"
-| where command_line CONTAINS "chmod" AND command_line CONTAINS "+s"
-| risk score=90 factor="SUID bit modification via sudo"
+| eval esc_sudo_to_non_root_user=(lower(command_line) CONTAINS "-u" AND (lower(command_line) CONTAINS "-u root") = false)
+| eval esc_suid_bit_modification_via_sudo=(lower(command_line) CONTAINS "chmod" AND lower(command_line) CONTAINS "+s")
+| risk score=min(100, 45 + if(esc_sudo_to_non_root_user, 25, 0) + if(esc_suid_bit_modification_via_sudo, 45, 0)) entity=src_host factor=concat("Sudo shell execution", if(esc_sudo_to_non_root_user, "; Sudo to non-root user", ""), if(esc_suid_bit_modification_via_sudo, "; SUID bit modification via sudo", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

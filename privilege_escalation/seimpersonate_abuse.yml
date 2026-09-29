@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where parent_process_name IN ("w3wp.exe", "sqlservr.exe", "mssql.exe", "tomcat.exe")
 | where process_name IN ("cmd.exe", "powershell.exe", "whoami.exe", "net.exe")
-| risk score=80 entity=src_host factor="Service account spawning shell"
-| where user CONTAINS "SYSTEM" OR user CONTAINS "NT AUTHORITY"
-| risk score=95 factor="SYSTEM shell from service"
+| eval esc_system_shell_from_service=(lower(user) CONTAINS "system" OR lower(user) CONTAINS "nt authority")
+| risk score=min(100, 80 + if(esc_system_shell_from_service, 15, 0)) entity=src_host factor=concat("Service account spawning shell", if(esc_system_shell_from_service, "; SYSTEM shell from service", ""))
 | table timestamp, src_host, user, parent_process_name, process_name, command_line, risk_score, risk_factors

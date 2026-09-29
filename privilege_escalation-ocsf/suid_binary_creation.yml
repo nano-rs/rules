@@ -27,7 +27,6 @@ ai_triage_hints:
 metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where process.name="chmod" AND (process.cmd_line CONTAINS "+s" OR process.cmd_line CONTAINS "4755" OR process.cmd_line CONTAINS "2755" OR process.cmd_line CONTAINS "u+s")
-| risk score=70 entity=device.hostname factor="SUID/SGID binary created"
-| where process.cmd_line CONTAINS "/tmp" OR process.cmd_line CONTAINS "/dev/shm" OR process.cmd_line CONTAINS "/var/tmp"
-| risk score=90 factor="SUID in temp directory"
-| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_suid_in_temp_directory=(lower(process.cmd_line) CONTAINS "/tmp" OR lower(process.cmd_line) CONTAINS "/dev/shm" OR lower(process.cmd_line) CONTAINS "/var/tmp")
+| risk score=min(100, 70 + if(esc_suid_in_temp_directory, 20, 0)) entity=device.hostname factor=concat("SUID/SGID binary created", if(esc_suid_in_temp_directory, "; SUID in temp directory", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

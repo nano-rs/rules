@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=linux_audit OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="chmod" AND (command_line CONTAINS "+s" OR command_line CONTAINS "4755" OR command_line CONTAINS "2755" OR command_line CONTAINS "u+s")
-| risk score=70 entity=src_host factor="SUID/SGID binary created"
-| where command_line CONTAINS "/tmp" OR command_line CONTAINS "/dev/shm" OR command_line CONTAINS "/var/tmp"
-| risk score=90 factor="SUID in temp directory"
+| eval esc_suid_in_temp_directory=(lower(command_line) CONTAINS "/tmp" OR lower(command_line) CONTAINS "/dev/shm" OR lower(command_line) CONTAINS "/var/tmp")
+| risk score=min(100, 70 + if(esc_suid_in_temp_directory, 20, 0)) entity=src_host factor=concat("SUID/SGID binary created", if(esc_suid_in_temp_directory, "; SUID in temp directory", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

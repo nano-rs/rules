@@ -27,7 +27,6 @@ ai_triage_hints:
 metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND (activity_id=1 OR activity_id=3)
 | where (process.cmd_line CONTAINS "token" OR actor.process.cmd_line CONTAINS "token") AND (process.cmd_line CONTAINS "duplicate" OR process.cmd_line CONTAINS "impersonate" OR process.cmd_line CONTAINS "assign" OR actor.process.cmd_line CONTAINS "duplicate" OR actor.process.cmd_line CONTAINS "impersonate" OR actor.process.cmd_line CONTAINS "assign")
-| risk score=70 entity=device.hostname factor="Token manipulation"
-| where actor.process.name NOT IN ("lsass.exe", "csrss.exe", "services.exe", "svchost.exe") AND process.name NOT IN ("lsass.exe", "csrss.exe", "services.exe", "svchost.exe")
-| risk score=85 factor="Unusual token manipulator"
-| table time, device.hostname, actor.user.name, actor.process.name, process.name, actor.process.cmd_line, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_unusual_token_manipulator=((lower(actor.process.name)!="lsass.exe" AND lower(actor.process.name)!="csrss.exe" AND lower(actor.process.name)!="services.exe" AND lower(actor.process.name)!="svchost.exe") AND (lower(process.name)!="lsass.exe" AND lower(process.name)!="csrss.exe" AND lower(process.name)!="services.exe" AND lower(process.name)!="svchost.exe"))
+| risk score=min(100, 70 + if(esc_unusual_token_manipulator, 15, 0)) entity=device.hostname factor=concat("Token manipulation", if(esc_unusual_token_manipulator, "; Unusual token manipulator", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.name, actor.process.cmd_line, process.cmd_line, risk_score, risk_factors

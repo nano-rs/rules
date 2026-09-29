@@ -27,7 +27,6 @@ ai_triage_hints:
 metadata.log_source="windows_sysmon"
 | where metadata.event_code IN ("19", "20", "21") OR process.name="wmic.exe"
 | where process.cmd_line CONTAINS "CommandLineEventConsumer" OR process.cmd_line CONTAINS "__EventFilter" OR process.cmd_line CONTAINS "ActiveScriptEventConsumer" OR message CONTAINS "CommandLineEventConsumer" OR message CONTAINS "__EventFilter" OR message CONTAINS "ActiveScriptEventConsumer"
-| risk score=80 entity=device.hostname factor="WMI event subscription"
-| where process.cmd_line CONTAINS "powershell" OR process.cmd_line CONTAINS "cmd.exe" OR message CONTAINS "powershell" OR message CONTAINS "cmd.exe"
-| risk score=90 factor="Shell in WMI consumer"
-| table time, device.hostname, actor.user.name, process.cmd_line, metadata.event_code, risk_score, unmapped.risk_factors
+| eval esc_shell_in_wmi_consumer=(lower(process.cmd_line) CONTAINS "powershell" OR lower(process.cmd_line) CONTAINS "cmd.exe" OR lower(message) CONTAINS "powershell" OR lower(message) CONTAINS "cmd.exe")
+| risk score=min(100, 80 + if(esc_shell_in_wmi_consumer, 10, 0)) entity=device.hostname factor=concat("WMI event subscription", if(esc_shell_in_wmi_consumer, "; Shell in WMI consumer", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, metadata.event_code, risk_score, risk_factors

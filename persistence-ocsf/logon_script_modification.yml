@@ -27,7 +27,6 @@ ai_triage_hints:
 metadata.log_source="windows_security" OR metadata.log_source="auth_logs"
 | where metadata.event_code IN ("5136", "5137", "5141") OR class_uid=201001 OR class_uid=201002 OR class_uid=1001
 | where message CONTAINS "ScriptPath" OR reg_key.path CONTAINS "\\UserInitMprLogonScript" OR reg_value.path CONTAINS "\\UserInitMprLogonScript" OR file.path CONTAINS "\\NETLOGON\\"
-| risk score=70 entity=device.hostname factor="Logon script modified"
-| where reg_value.data CONTAINS "powershell" OR reg_value.data CONTAINS ".ps1" OR reg_value.data CONTAINS "http"
-| risk score=90 factor="Suspicious script content"
-| table time, device.hostname, actor.user.name, file.path, reg_key.path, reg_value.path, reg_value.data, risk_score, unmapped.risk_factors
+| eval esc_suspicious_script_content=(lower(reg_value.data) CONTAINS "powershell" OR lower(reg_value.data) CONTAINS ".ps1" OR lower(reg_value.data) CONTAINS "http")
+| risk score=min(100, 70 + if(esc_suspicious_script_content, 20, 0)) entity=device.hostname factor=concat("Logon script modified", if(esc_suspicious_script_content, "; Suspicious script content", ""))
+| table time, device.hostname, actor.user.name, file.path, reg_key.path, reg_value.path, reg_value.data, risk_score, risk_factors
