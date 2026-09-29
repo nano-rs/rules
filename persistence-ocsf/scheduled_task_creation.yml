@@ -31,12 +31,8 @@ ai_triage_hints:
 metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security"
 | where metadata.event_code="4698" OR process.name="schtasks.exe"
 | risk score=45 entity=device.hostname factor="Scheduled task created"
-| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR message CONTAINS "Temp" OR message CONTAINS "AppData"
-| risk score=70 factor="Suspicious execution path"
-| where process.cmd_line CONTAINS "-enc" OR message CONTAINS "-enc"
-| risk score=85 factor="Encoded command in task"
-| where actor.process.name IN ("wscript.exe", "cscript.exe", "mshta.exe")
-| risk score=80 factor="Script engine parent"
-| where actor.process.name IN ("winword.exe", "excel.exe", "powerpnt.exe")
-| risk score=90 factor="Office app parent"
-| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| risk score=if(match(process.cmd_line, "(?i)temp|appdata|programdata") OR match(message, "(?i)temp|appdata|programdata"), 25, 0) factor=if(match(process.cmd_line, "(?i)temp|appdata|programdata") OR match(message, "(?i)temp|appdata|programdata"), "Suspicious execution path", null())
+| risk score=if(match(process.cmd_line, "(?i)-enc") OR match(message, "(?i)-enc"), 40, 0) factor=if(match(process.cmd_line, "(?i)-enc") OR match(message, "(?i)-enc"), "Encoded command in task", null())
+| risk score=if(lower(actor.process.name)="wscript.exe" OR lower(actor.process.name)="cscript.exe" OR lower(actor.process.name)="mshta.exe", 35, 0) factor=if(lower(actor.process.name)="wscript.exe" OR lower(actor.process.name)="cscript.exe" OR lower(actor.process.name)="mshta.exe", "Script engine parent", null())
+| risk score=if(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="powerpnt.exe", 45, 0) factor=if(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="powerpnt.exe", "Office app parent", null())
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, risk_factors
