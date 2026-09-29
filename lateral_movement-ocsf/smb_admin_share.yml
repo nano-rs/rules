@@ -28,10 +28,8 @@ ai_triage_hints:
 metadata.log_source="windows_event" OR metadata.log_source="windows_sysmon"
 | where metadata.event_code="5140" OR metadata.event_code="5145"
 | where message CONTAINS "C$" OR message CONTAINS "ADMIN$" OR message CONTAINS "IPC$"
-| risk score=45 entity=device.hostname factor="Admin share access"
-| where src_endpoint.hostname CONTAINS "ws" OR src_endpoint.hostname CONTAINS "desktop" OR src_endpoint.hostname CONTAINS "laptop"
-| risk score=65 factor="Workstation accessing admin share"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=80 factor="Unusual admin share access"
+| eval esc_workstation_accessing_admin_share=(lower(src_endpoint.hostname) CONTAINS "ws" OR lower(src_endpoint.hostname) CONTAINS "desktop" OR lower(src_endpoint.hostname) CONTAINS "laptop")
+| eval esc_unusual_admin_share_access=(host_count < 5)
+| risk score=min(100, 45 + if(esc_workstation_accessing_admin_share, 20, 0) + if(esc_unusual_admin_share_access, 35, 0)) entity=device.hostname factor=concat("Admin share access", if(esc_workstation_accessing_admin_share, "; Workstation accessing admin share", ""), if(esc_unusual_admin_share_access, "; Unusual admin share access", ""))
 | table time, device.hostname, src_endpoint.hostname, src_endpoint.ip, user.name, dst_endpoint.hostname, message, host_count, risk_score, risk_factors

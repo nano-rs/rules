@@ -29,7 +29,6 @@ metadata.log_source="endpoint_edr" OR metadata.log_source="windows_sysmon"
 | where process.name="python.exe" OR process.name="python3.exe" OR process.name="pythonw.exe" OR process.name="python3"
 | prevalence enrich=true window=30d
 | where host_count < 20
-| risk score=50 entity=device.hostname factor="Uncommon Python execution"
-| where process.cmd_line CONTAINS "-c" AND (process.cmd_line CONTAINS "import socket" OR process.cmd_line CONTAINS "import subprocess" OR process.cmd_line CONTAINS "exec(")
-| risk score=85 factor="Suspicious Python one-liner"
-| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_suspicious_python_one_liner=(lower(process.cmd_line) CONTAINS "-c" AND (lower(process.cmd_line) CONTAINS "import socket" OR lower(process.cmd_line) CONTAINS "import subprocess" OR lower(process.cmd_line) CONTAINS "exec("))
+| risk score=min(100, 50 + if(esc_suspicious_python_one_liner, 35, 0)) entity=device.hostname factor=concat("Uncommon Python execution", if(esc_suspicious_python_one_liner, "; Suspicious Python one-liner", ""))
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

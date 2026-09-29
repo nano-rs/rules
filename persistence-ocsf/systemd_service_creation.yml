@@ -28,8 +28,7 @@ metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr"
 | where class_uid=1001 AND activity_id=1
 | where file.path CONTAINS "/etc/systemd/" OR file.path CONTAINS "/lib/systemd/"
 | where file.path CONTAINS ".service"
-| risk score=55 entity=device.hostname factor="New systemd service"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=80 factor="Rare systemd service"
-| table time, device.hostname, actor.user.name, file.path, actor.process.name, actor.process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_rare_systemd_service=(host_count < 5)
+| risk score=min(100, 55 + if(esc_rare_systemd_service, 25, 0)) entity=device.hostname factor=concat("New systemd service", if(esc_rare_systemd_service, "; Rare systemd service", ""))
+| table time, device.hostname, actor.user.name, file.path, actor.process.name, actor.process.cmd_line, risk_score, risk_factors

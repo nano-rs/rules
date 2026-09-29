@@ -30,7 +30,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where file.path NOT CONTAINS "System32" AND file.path NOT CONTAINS "SysWOW64" AND file.path NOT CONTAINS "WinSxS"
 | prevalence enrich=true window=30d
 | where host_count < 5
-| risk score=70 entity=device.hostname factor="Rare DLL created"
-| where file.path CONTAINS "Program Files"
-| risk score=85 factor="DLL in application directory"
-| table time, device.hostname, actor.user.name, file.path, file.hashes.value, actor.process.name, risk_score, unmapped.risk_factors
+| eval esc_dll_in_application_directory=(lower(file.path) CONTAINS "program files")
+| risk score=min(100, 70 + if(esc_dll_in_application_directory, 15, 0)) entity=device.hostname factor=concat("Rare DLL created", if(esc_dll_in_application_directory, "; DLL in application directory", ""))
+| table time, device.hostname, actor.user.name, file.path, file.hashes.value, actor.process.name, risk_score, risk_factors

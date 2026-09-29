@@ -29,7 +29,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where process_name="python.exe" OR process_name="python3.exe" OR process_name="pythonw.exe" OR process_name="python3"
 | prevalence enrich=true window=30d
 | where host_count < 20
-| risk score=50 entity=src_host factor="Uncommon Python execution"
-| where command_line CONTAINS "-c" AND (command_line CONTAINS "import socket" OR command_line CONTAINS "import subprocess" OR command_line CONTAINS "exec(")
-| risk score=85 factor="Suspicious Python one-liner"
+| eval esc_suspicious_python_one_liner=(lower(command_line) CONTAINS "-c" AND (lower(command_line) CONTAINS "import socket" OR lower(command_line) CONTAINS "import subprocess" OR lower(command_line) CONTAINS "exec("))
+| risk score=min(100, 50 + if(esc_suspicious_python_one_liner, 35, 0)) entity=src_host factor=concat("Uncommon Python execution", if(esc_suspicious_python_one_liner, "; Suspicious Python one-liner", ""))
 | table timestamp, src_host, user, process_name, command_line, host_count, risk_score, risk_factors

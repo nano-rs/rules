@@ -27,13 +27,10 @@ ai_triage_hints:
 ---
 metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1005 AND (metadata.event_code="6" OR module.file.path CONTAINS ".sys")
+| eval esc_driver_signature_not_valid=((lower(tostring(module.file.signatures.state)) CONTAINS "'valid'") = false)
 | prevalence enrich=true window=30d
 | where host_count < 10
-| risk score=70 entity=device.hostname factor="Rare kernel driver"
-| where host_count < 3
-| risk score=90 factor="Very rare driver"
-| where module.file.signatures.state != "Valid"
-| risk score=92 factor="Driver signature not valid"
-| where module.file.path CONTAINS "Temp" OR module.file.path CONTAINS "AppData" OR module.file.path CONTAINS "Downloads"
-| risk score=95 factor="Driver from suspicious path"
-| table time, device.hostname, module.file.name, module.file.path, module.file.signatures.state, risk_score, unmapped.risk_factors
+| eval esc_very_rare_driver=(host_count < 3)
+| eval esc_driver_from_suspicious_path=(lower(module.file.path) CONTAINS "temp" OR lower(module.file.path) CONTAINS "appdata" OR lower(module.file.path) CONTAINS "downloads")
+| risk score=min(100, 70 + if(esc_very_rare_driver, 20, 0) + if(esc_driver_signature_not_valid, 22, 0) + if(esc_driver_from_suspicious_path, 25, 0)) entity=device.hostname factor=concat("Rare kernel driver", if(esc_very_rare_driver, "; Very rare driver", ""), if(esc_driver_signature_not_valid, "; Driver signature not valid", ""), if(esc_driver_from_suspicious_path, "; Driver from suspicious path", ""))
+| table time, device.hostname, module.file.name, module.file.path, module.file.signatures.state, risk_score, risk_factors, esc_driver_signature_not_valid

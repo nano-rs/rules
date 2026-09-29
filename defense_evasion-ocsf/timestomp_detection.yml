@@ -30,9 +30,7 @@ ai_triage_hints:
 metadata.log_source="windows_sysmon" class_uid=1001 activity_id=6
 | prevalence enrich=true window=30d
 | where host_count < 20
-| risk score=60 entity=device.hostname factor="Timestamp manipulation"
-| where host_count < 10
-| risk score=80 factor="Rare file hash"
-| where file.path CONTAINS "System32"
-| risk score=90 factor="System directory target"
+| eval esc_rare_file_hash=(host_count < 10)
+| eval esc_system_directory_target=(lower(file.path) CONTAINS "system32")
+| risk score=min(100, 60 + if(esc_rare_file_hash, 20, 0) + if(esc_system_directory_target, 30, 0)) entity=device.hostname factor=concat("Timestamp manipulation", if(esc_rare_file_hash, "; Rare file hash", ""), if(esc_system_directory_target, "; System directory target", ""))
 | table time, device.hostname, file.path, file.hashes.value, actor.process.name, host_count, is_rare, risk_score, risk_factors

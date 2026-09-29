@@ -27,8 +27,7 @@ ai_triage_hints:
 metadata.log_source="windows_sysmon"
 | where metadata.event_code IN ("17", "18")
 | where file.name CONTAINS "spoolss" OR file.name CONTAINS "efsrpc" OR file.name CONTAINS "lsarpc" OR file.name CONTAINS "samr" OR file.path CONTAINS "spoolss" OR file.path CONTAINS "efsrpc" OR file.path CONTAINS "lsarpc" OR file.path CONTAINS "samr" OR message CONTAINS "spoolss" OR message CONTAINS "efsrpc" OR message CONTAINS "lsarpc" OR message CONTAINS "samr"
-| risk score=70 entity=device.hostname factor="Suspicious named pipe"
 | prevalence enrich=true window=30d
-| where host_count < 10
-| risk score=85 factor="Rare pipe creator"
-| table time, device.hostname, actor.user.name, actor.process.name, file.name, file.path, risk_score, unmapped.risk_factors
+| eval esc_rare_pipe_creator=(host_count < 10)
+| risk score=min(100, 70 + if(esc_rare_pipe_creator, 15, 0)) entity=device.hostname factor=concat("Suspicious named pipe", if(esc_rare_pipe_creator, "; Rare pipe creator", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, file.name, file.path, risk_score, risk_factors
