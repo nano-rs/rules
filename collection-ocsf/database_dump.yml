@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1007 activity_id=1
 | where process.name IN ("mysqldump", "pg_dump", "sqlcmd.exe", "bcp.exe", "mongodump")
-| risk score=50 entity=device.hostname factor="Database dump detected"
-| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "Downloads" OR process.cmd_line CONTAINS "/tmp"
-| risk score=75 factor="Dump to suspicious path"
+| eval esc_dump_to_suspicious_path=(lower(process.cmd_line) CONTAINS "temp" OR lower(process.cmd_line) CONTAINS "downloads" OR lower(process.cmd_line) CONTAINS "/tmp")
+| risk score=min(100, 50 + if(esc_dump_to_suspicious_path, 25, 0)) entity=device.hostname factor=concat("Database dump detected", if(esc_dump_to_suspicious_path, "; Dump to suspicious path", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

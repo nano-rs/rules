@@ -27,7 +27,6 @@ ai_triage_hints:
 ---
 metadata.log_source IN ("windows_sysmon", "endpoint_edr") class_uid=1007 activity_id=1
 | where (process.name="reg.exe" AND process.cmd_line CONTAINS "save" AND (process.cmd_line CONTAINS "sam" OR process.cmd_line CONTAINS "system" OR process.cmd_line CONTAINS "security"))
-| risk score=80 entity=device.hostname factor="Registry hive dump"
-| where process.cmd_line CONTAINS "sam" AND process.cmd_line CONTAINS "system"
-| risk score=95 factor="SAM+SYSTEM dump"
+| eval esc_sam_system_dump=(lower(process.cmd_line) CONTAINS "sam" AND lower(process.cmd_line) CONTAINS "system")
+| risk score=min(100, 80 + if(esc_sam_system_dump, 15, 0)) entity=device.hostname factor=concat("Registry hive dump", if(esc_sam_system_dump, "; SAM+SYSTEM dump", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

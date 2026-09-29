@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007 activity_id=1
 | where process.name="powershell.exe" OR process.name="pwsh.exe"
 | where process.cmd_line CONTAINS "Outlook.Application" OR process.cmd_line CONTAINS "New-PST" OR process.cmd_line CONTAINS "Export-Mailbox" OR process.cmd_line CONTAINS ".ost" OR process.cmd_line CONTAINS ".pst"
-| risk score=75 entity=device.hostname factor="Email collection detected"
-| where process.cmd_line CONTAINS "GetFolder" OR process.cmd_line CONTAINS "Items"
-| risk score=85 factor="Mailbox enumeration"
+| eval esc_mailbox_enumeration=(lower(process.cmd_line) CONTAINS "getfolder" OR lower(process.cmd_line) CONTAINS "items")
+| risk score=min(100, 75 + if(esc_mailbox_enumeration, 10, 0)) entity=device.hostname factor=concat("Email collection detected", if(esc_mailbox_enumeration, "; Mailbox enumeration", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

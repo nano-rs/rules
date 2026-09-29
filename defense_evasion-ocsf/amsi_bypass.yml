@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007 activity_id=1
 | where process.name="powershell.exe" OR process.name="pwsh.exe"
 | where process.cmd_line CONTAINS "AmsiUtils" OR process.cmd_line CONTAINS "amsiInitFailed" OR process.cmd_line CONTAINS "AmsiScanBuffer" OR process.cmd_line CONTAINS "NonPublic"
-| risk score=85 entity=device.hostname factor="AMSI bypass attempt"
-| where process.cmd_line CONTAINS "Reflection" AND process.cmd_line CONTAINS "NonPublic"
-| risk score=90 factor="Reflection-based AMSI bypass"
+| eval esc_reflection_based_amsi_bypass=(lower(process.cmd_line) CONTAINS "reflection" AND lower(process.cmd_line) CONTAINS "nonpublic")
+| risk score=min(100, 85 + if(esc_reflection_based_amsi_bypass, 5, 0)) entity=device.hostname factor=concat("AMSI bypass attempt", if(esc_reflection_based_amsi_bypass, "; Reflection-based AMSI bypass", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

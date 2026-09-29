@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where process_name IN ("mysqldump", "pg_dump", "sqlcmd.exe", "bcp.exe", "mongodump")
-| risk score=50 entity=src_host factor="Database dump detected"
-| where command_line CONTAINS "Temp" OR command_line CONTAINS "Downloads" OR command_line CONTAINS "/tmp"
-| risk score=75 factor="Dump to suspicious path"
+| eval esc_dump_to_suspicious_path=(lower(command_line) CONTAINS "temp" OR lower(command_line) CONTAINS "downloads" OR lower(command_line) CONTAINS "/tmp")
+| risk score=min(100, 50 + if(esc_dump_to_suspicious_path, 25, 0)) entity=src_host factor=concat("Database dump detected", if(esc_dump_to_suspicious_path, "; Dump to suspicious path", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

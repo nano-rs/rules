@@ -29,7 +29,6 @@ metadata.log_source IN ("endpoint_edr", "windows_sysmon") class_uid=1007 activit
 | where process.cmd_line CONTAINS "SetWindowsHookEx" OR process.cmd_line CONTAINS "GetAsyncKeyState" OR process.cmd_line CONTAINS "GetKeyState"
 | stats count() as hits, dc(device.hostname) as host_count, values(device.hostname) as hosts, values(process.file.hashes.sha256) as hashes, min(time) as time by process.name
 | where host_count < 10
-| risk score=70 entity=process.name factor="Potential keylogger"
-| where host_count < 3
-| risk score=90 factor="Rare process with input capture"
+| eval esc_rare_process_with_input_capture=(host_count < 3)
+| risk score=min(100, 70 + if(esc_rare_process_with_input_capture, 20, 0)) entity=process.name factor=concat("Potential keylogger", if(esc_rare_process_with_input_capture, "; Rare process with input capture", ""))
 | table time, hosts, process.name, hashes, host_count, hits, risk_score, risk_factors
