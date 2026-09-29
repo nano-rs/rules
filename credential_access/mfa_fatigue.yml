@@ -28,9 +28,7 @@ source_type=okta OR source_type=azure_ad OR source_type=auth_logs
 | where event_type="mfa_challenge" OR event_type="mfa_push"
 | stats count, min(timestamp) as timestamp by user, src_ip
 | where count > 5
-| risk score=70 entity=user factor="MFA push fatigue"
-| where count > 10
-| risk score=85 factor="Severe MFA fatigue attack"
-| where count > 20
-| risk score=95 factor="Extreme MFA bombardment"
+| eval esc_severe_mfa_fatigue_attack=(count > 10)
+| eval esc_extreme_mfa_bombardment=(count > 20)
+| risk score=min(100, 70 + if(esc_severe_mfa_fatigue_attack, 15, 0) + if(esc_extreme_mfa_bombardment, 10, 0)) entity=user factor=concat("MFA push fatigue", if(esc_severe_mfa_fatigue_attack, "; Severe MFA fatigue attack", ""), if(esc_extreme_mfa_bombardment, "; Extreme MFA bombardment", ""))
 | table timestamp, user, src_ip, count, risk_score, risk_factors

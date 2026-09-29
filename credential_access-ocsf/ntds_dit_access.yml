@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 metadata.log_source IN ("windows_sysmon", "endpoint_edr") class_uid=1007 activity_id=1
 | where (process.cmd_line CONTAINS "ntds.dit") OR (process.name="ntdsutil.exe" AND process.cmd_line CONTAINS "ifm") OR (process.cmd_line CONTAINS "vssadmin" AND process.cmd_line CONTAINS "create shadow")
-| risk score=90 entity=device.hostname factor="NTDS.dit access"
-| where process.name="ntdsutil.exe" AND process.cmd_line CONTAINS "create full"
-| risk score=95 factor="NTDS.dit IFM creation"
+| eval esc_ntds_dit_ifm_creation=(lower(process.name)="ntdsutil.exe" AND lower(process.cmd_line) CONTAINS "create full")
+| risk score=min(100, 90 + if(esc_ntds_dit_ifm_creation, 5, 0)) entity=device.hostname factor=concat("NTDS.dit access", if(esc_ntds_dit_ifm_creation, "; NTDS.dit IFM creation", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors
