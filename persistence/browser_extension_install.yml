@@ -28,7 +28,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where file_action="create"
 | where file_path CONTAINS "\\Extensions\\" AND file_path CONTAINS "manifest.json"
 | where process_name NOT IN ("chrome.exe", "msedge.exe", "firefox.exe")
-| risk score=65 entity=src_host factor="Extension installed outside browser"
-| where process_name IN ("powershell.exe", "cmd.exe", "wscript.exe")
-| risk score=85 factor="Script installed extension"
+| eval esc_script_installed_extension=(lower(process_name)="powershell.exe" OR lower(process_name)="cmd.exe" OR lower(process_name)="wscript.exe")
+| risk score=min(100, 65 + if(esc_script_installed_extension, 20, 0)) entity=src_host factor=concat("Extension installed outside browser", if(esc_script_installed_extension, "; Script installed extension", ""))
 | table timestamp, src_host, user, file_path, process_name, risk_score, risk_factors

@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007 activity_id=1
 | where actor.process.name="mmc.exe" OR actor.process.name="explorer.exe"
 | where process.name IN ("cmd.exe", "powershell.exe") AND process.cmd_line CONTAINS "\\*"
-| risk score=70 entity=device.hostname factor="Potential DCOM lateral movement"
-| where process.cmd_line CONTAINS "-enc" OR process.cmd_line CONTAINS "IEX"
-| risk score=85 factor="Suspicious DCOM payload"
+| eval esc_suspicious_dcom_payload=(lower(process.cmd_line) CONTAINS "-enc" OR lower(process.cmd_line) CONTAINS "iex")
+| risk score=min(100, 70 + if(esc_suspicious_dcom_payload, 15, 0)) entity=device.hostname factor=concat("Potential DCOM lateral movement", if(esc_suspicious_dcom_payload, "; Suspicious DCOM payload", ""))
 | table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, risk_factors

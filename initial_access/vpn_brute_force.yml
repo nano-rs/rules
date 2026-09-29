@@ -29,9 +29,7 @@ source_type=vpn_logs OR source_type=firewall OR source_type=auth_logs
 | where source_type CONTAINS "vpn" OR message CONTAINS "VPN" OR dest_port IN (443, 1194, 500, 4500)
 | stats count, dc(user) as unique_users, min(timestamp) as timestamp by src_ip
 | where count > 20
-| risk score=65 entity=src_ip factor="VPN brute force"
-| where unique_users > 5
-| risk score=80 factor="Multi-user VPN brute force"
-| where unique_users > 20
-| risk score=90 factor="Large-scale VPN attack"
+| eval esc_multi_user_vpn_brute_force=(unique_users > 5)
+| eval esc_large_scale_vpn_attack=(unique_users > 20)
+| risk score=min(100, 65 + if(esc_multi_user_vpn_brute_force, 15, 0) + if(esc_large_scale_vpn_attack, 10, 0)) entity=src_ip factor=concat("VPN brute force", if(esc_multi_user_vpn_brute_force, "; Multi-user VPN brute force", ""), if(esc_large_scale_vpn_attack, "; Large-scale VPN attack", ""))
 | table timestamp, src_ip, count, unique_users, risk_score, risk_factors

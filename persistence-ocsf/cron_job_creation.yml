@@ -27,9 +27,7 @@ ai_triage_hints:
 ---
 metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr"
 | where (class_uid=1007 AND activity_id=1 AND process.name="crontab") OR (class_uid=1001 AND (file.path CONTAINS "/cron.d/" OR file.path CONTAINS "/crontab"))
-| risk score=45 entity=device.hostname factor="Cron job modified"
-| where process.cmd_line CONTAINS "curl" OR process.cmd_line CONTAINS "wget" OR process.cmd_line CONTAINS "nc " OR process.cmd_line CONTAINS "python" OR actor.process.cmd_line CONTAINS "curl" OR actor.process.cmd_line CONTAINS "wget" OR actor.process.cmd_line CONTAINS "nc " OR actor.process.cmd_line CONTAINS "python"
-| risk score=75 factor="Network command in cron"
-| where process.cmd_line CONTAINS "base64" OR process.cmd_line CONTAINS "|sh" OR process.cmd_line CONTAINS "|bash" OR actor.process.cmd_line CONTAINS "base64" OR actor.process.cmd_line CONTAINS "|sh" OR actor.process.cmd_line CONTAINS "|bash"
-| risk score=85 factor="Encoded or piped execution"
-| table time, device.hostname, actor.user.name, process.cmd_line, actor.process.cmd_line, file.path, risk_score, unmapped.risk_factors
+| eval esc_network_command_in_cron=(lower(process.cmd_line) CONTAINS "curl" OR lower(process.cmd_line) CONTAINS "wget" OR lower(process.cmd_line) CONTAINS "nc " OR lower(process.cmd_line) CONTAINS "python" OR lower(actor.process.cmd_line) CONTAINS "curl" OR lower(actor.process.cmd_line) CONTAINS "wget" OR lower(actor.process.cmd_line) CONTAINS "nc " OR lower(actor.process.cmd_line) CONTAINS "python")
+| eval esc_encoded_or_piped_execution=(lower(process.cmd_line) CONTAINS "base64" OR lower(process.cmd_line) CONTAINS "|sh" OR lower(process.cmd_line) CONTAINS "|bash" OR lower(actor.process.cmd_line) CONTAINS "base64" OR lower(actor.process.cmd_line) CONTAINS "|sh" OR lower(actor.process.cmd_line) CONTAINS "|bash")
+| risk score=min(100, 45 + if(esc_network_command_in_cron, 30, 0) + if(esc_encoded_or_piped_execution, 40, 0)) entity=device.hostname factor=concat("Cron job modified", if(esc_network_command_in_cron, "; Network command in cron", ""), if(esc_encoded_or_piped_execution, "; Encoded or piped execution", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, actor.process.cmd_line, file.path, risk_score, risk_factors

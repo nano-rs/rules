@@ -39,7 +39,6 @@ source_type=email_gateway OR source_type=endpoint_edr OR source_type=proxy
     [event_type="url_click" url_domain!=/company\.com$/i]
     [file_action="create" file_path=/\.(exe|scr|bat|cmd|ps1|vbs|js|hta|msi|dll|jar)$/i]
     [event_type="process_create"]
-| risk score=90 entity=user factor="Complete phishing chain"
-| where sequence_duration_seconds < 300
-| risk score=95 factor="Rapid execution after download"
+| eval esc_rapid_execution_after_download=(sequence_duration_seconds < 300)
+| risk score=min(100, 90 + if(esc_rapid_execution_after_download, 5, 0)) entity=user factor=concat("Complete phishing chain", if(esc_rapid_execution_after_download, "; Rapid execution after download", ""))
 | table timestamp, user, src_host, step1_subject, step1_sender, step2_url, step3_file_path, step4_process_name, sequence_duration_seconds, risk_score, risk_factors

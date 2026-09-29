@@ -28,7 +28,6 @@ class_uid=4001 dst_endpoint.port=22
 | where is_private_ip(src_endpoint.ip)
 | stats count, dc(dst_endpoint.ip) as unique_dests, min(time) as time by src_endpoint.ip, actor.user.name
 | where unique_dests > 3
-| risk score=50 entity=src_endpoint.ip factor="Multiple SSH destinations"
-| where unique_dests > 8
-| risk score=75 factor="SSH lateral movement pattern"
+| eval esc_ssh_lateral_movement_pattern=(unique_dests > 8)
+| risk score=min(100, 50 + if(esc_ssh_lateral_movement_pattern, 25, 0)) entity=src_endpoint.ip factor=concat("Multiple SSH destinations", if(esc_ssh_lateral_movement_pattern, "; SSH lateral movement pattern", ""))
 | table time, src_endpoint.ip, actor.user.name, unique_dests, count, risk_score, risk_factors

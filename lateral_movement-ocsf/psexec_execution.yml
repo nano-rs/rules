@@ -29,7 +29,6 @@ ai_triage_hints:
 ---
 metadata.log_source="windows_sysmon" OR metadata.log_source="windows_event"
 | where process.name="psexec.exe" OR process.name="psexesvc.exe" OR process.cmd_line CONTAINS "PSEXESVC" OR process.cmd_line CONTAINS "\\\\*\\admin$"
-| risk score=65 entity=device.hostname factor="PsExec activity"
-| where process.cmd_line CONTAINS "powershell" OR process.cmd_line CONTAINS "cmd /c"
-| risk score=80 factor="Remote shell via PsExec"
+| eval esc_remote_shell_via_psexec=(lower(process.cmd_line) CONTAINS "powershell" OR lower(process.cmd_line) CONTAINS "cmd /c")
+| risk score=min(100, 65 + if(esc_remote_shell_via_psexec, 15, 0)) entity=device.hostname factor=concat("PsExec activity", if(esc_remote_shell_via_psexec, "; Remote shell via PsExec", ""))
 | table time, device.hostname, actor.user.name, dst_endpoint.hostname, process.name, process.cmd_line, risk_score, risk_factors

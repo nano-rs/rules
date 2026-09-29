@@ -28,7 +28,6 @@ metadata.log_source="endpoint_edr" OR metadata.log_source="windows_sysmon"
 | where class_uid=1001 AND activity_id=1
 | where file.path CONTAINS "\\Extensions\\" AND file.path CONTAINS "manifest.json"
 | where actor.process.name NOT IN ("chrome.exe", "msedge.exe", "firefox.exe")
-| risk score=65 entity=device.hostname factor="Extension installed outside browser"
-| where actor.process.name IN ("powershell.exe", "cmd.exe", "wscript.exe")
-| risk score=85 factor="Script installed extension"
-| table time, device.hostname, actor.user.name, file.path, actor.process.name, risk_score, unmapped.risk_factors
+| eval esc_script_installed_extension=(lower(actor.process.name)="powershell.exe" OR lower(actor.process.name)="cmd.exe" OR lower(actor.process.name)="wscript.exe")
+| risk score=min(100, 65 + if(esc_script_installed_extension, 20, 0)) entity=device.hostname factor=concat("Extension installed outside browser", if(esc_script_installed_extension, "; Script installed extension", ""))
+| table time, device.hostname, actor.user.name, file.path, actor.process.name, risk_score, risk_factors

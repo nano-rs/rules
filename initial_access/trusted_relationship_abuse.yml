@@ -27,11 +27,9 @@ ai_triage_hints:
 source_type=vpn_logs OR source_type=firewall OR source_type=auth_logs
 | where event_type="login" AND status="success"
 | where user CONTAINS "vendor" OR user CONTAINS "partner" OR user CONTAINS "contractor" OR user CONTAINS "ext_"
-| risk score=35 entity=user factor="Third-party access"
 | eval hour = tonumber(strftime(timestamp, "%H"))
-| where hour < 7 OR hour > 19
-| risk score=65 factor="Off-hours third-party access"
 | eval day = tonumber(strftime(timestamp, "%w"))
-| where day = 0 OR day = 6
-| risk score=75 factor="Weekend third-party access"
+| eval esc_off_hours_third_party_access=(hour < 7 OR hour > 19)
+| eval esc_weekend_third_party_access=(day = 0 OR day = 6)
+| risk score=min(100, 35 + if(esc_off_hours_third_party_access, 30, 0) + if(esc_weekend_third_party_access, 40, 0)) entity=user factor=concat("Third-party access", if(esc_off_hours_third_party_access, "; Off-hours third-party access", ""), if(esc_weekend_third_party_access, "; Weekend third-party access", ""))
 | table timestamp, user, src_ip, dest_host, hour, risk_score, risk_factors

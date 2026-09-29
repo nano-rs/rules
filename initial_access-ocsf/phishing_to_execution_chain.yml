@@ -39,7 +39,6 @@ metadata.log_source IN ("email_gateway", "endpoint_edr", "proxy", "conduit_proxy
     [class_uid=4002 http_request.url.hostname!=/company\.com$/i]
     [class_uid=1001 activity_id=1 file.path=/\.(exe|scr|bat|cmd|ps1|vbs|js|hta|msi|dll|jar)$/i]
     [class_uid=1007 activity_id=1]
-| risk score=90 entity=user.name factor="Complete phishing chain"
-| where sequence_duration_seconds < 300
-| risk score=95 factor="Rapid execution after download"
+| eval esc_rapid_execution_after_download=(sequence_duration_seconds < 300)
+| risk score=min(100, 90 + if(esc_rapid_execution_after_download, 5, 0)) entity=user.name factor=concat("Complete phishing chain", if(esc_rapid_execution_after_download, "; Rapid execution after download", ""))
 | table time, user.name, step1_email_subject, step1_email_from, step2_http_request_url_url_string, step3_file_path, step4_process_name, step4_device_hostname, sequence_duration_seconds, risk_score, risk_factors
