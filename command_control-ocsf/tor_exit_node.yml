@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=4001 OR class_uid=4002
 | where dst_endpoint.port=9001 OR dst_endpoint.port=9030 OR http_request.url.url_string CONTAINS ".onion" OR dst_endpoint.hostname CONTAINS ".onion" OR dst_endpoint.hostname CONTAINS "torproject.org"
-| risk score=75 entity=src_endpoint.hostname factor="Tor network connection"
-| where src_endpoint.hostname CONTAINS "srv" OR src_endpoint.hostname CONTAINS "server"
-| risk score=90 factor="Server connecting to Tor"
+| eval esc_server_connecting_to_tor=(lower(src_endpoint.hostname) CONTAINS "srv" OR lower(src_endpoint.hostname) CONTAINS "server")
+| risk score=min(100, 75 + if(esc_server_connecting_to_tor, 15, 0)) entity=src_endpoint.hostname factor=concat("Tor network connection", if(esc_server_connecting_to_tor, "; Server connecting to Tor", ""))
 | table time, src_endpoint.hostname, src_endpoint.ip, actor.user.name, dst_endpoint.ip, dst_endpoint.port, dst_endpoint.hostname, risk_score, risk_factors
