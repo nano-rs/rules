@@ -29,8 +29,9 @@ class_uid=4001
 | where connection_info.protocol_num=6
 | where dst_endpoint.port NOT IN (80, 22, 25, 88, 135, 139, 445, 3389)
 | where NOT is_private_ip(dst_endpoint.ip)
-| prevalence enrich=true window=30d
+| stats min(time) as time, count as sessions by src_endpoint.hostname, src_endpoint.ip, dst_endpoint.ip, dst_endpoint.port
+| prevalence dst_endpoint.ip window=30d
 | eval esc_rare_destination=(host_count < 5)
 | eval esc_unique_covert_channel=(host_count < 2)
 | risk score=min(100, 50 + if(esc_rare_destination, 20, 0) + if(esc_unique_covert_channel, 15, 0)) entity=src_endpoint.hostname factor=concat("TCP session on non-standard port", if(esc_rare_destination, "; Rare destination", ""), if(esc_unique_covert_channel, "; Unique covert channel", ""))
-| table time, src_endpoint.hostname, src_endpoint.ip, dst_endpoint.ip, dst_endpoint.port, host_count, risk_score, risk_factors
+| table time, src_endpoint.hostname, src_endpoint.ip, dst_endpoint.ip, dst_endpoint.port, sessions, host_count, risk_score, risk_factors

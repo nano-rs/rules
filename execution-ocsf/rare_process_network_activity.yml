@@ -33,9 +33,11 @@ ai_triage_hints:
 metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=4001 AND dst_endpoint.port > 0
 | where NOT is_private_ip(dst_endpoint.ip)
-| prevalence enrich=true window=30d
+| where actor.process.file.hashes.value != ""
+| stats min(time) as time, count as connections, values(dst_endpoint.ip) as dst_ips, values(dst_endpoint.port) as dst_ports by device.hostname, actor.process.name, actor.process.file.path, actor.process.file.hashes.value
+| prevalence actor.process.file.hashes.value window=30d
 | where host_count < 10
 | eval esc_very_rare_hash=(host_count < 5)
-| eval esc_non_standard_port=(dst_endpoint.port!=80 AND dst_endpoint.port!=443 AND dst_endpoint.port!=53)
+| eval esc_non_standard_port=(NOT has(dst_ports, 80) AND NOT has(dst_ports, 443) AND NOT has(dst_ports, 53))
 | risk score=min(100, 50 + if(esc_very_rare_hash, 25, 0) + if(esc_non_standard_port, 35, 0)) entity=device.hostname factor=concat("Rare process with network", if(esc_very_rare_hash, "; Very rare hash", ""), if(esc_non_standard_port, "; Non-standard port", ""))
-| table time, device.hostname, actor.process.name, actor.process.file.path, actor.process.file.hashes.value, dst_endpoint.ip, dst_endpoint.port, risk_score, risk_factors
+| table time, device.hostname, actor.process.name, actor.process.file.path, actor.process.file.hashes.value, dst_ips, dst_ports, connections, host_count, risk_score, risk_factors
