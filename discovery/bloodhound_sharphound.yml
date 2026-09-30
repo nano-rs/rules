@@ -28,7 +28,6 @@ ai_triage_hints:
 source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where command_line CONTAINS "SharpHound" OR command_line CONTAINS "bloodhound" OR command_line CONTAINS "Invoke-BloodHound" OR (process_name="sharphound.exe")
-| risk score=85 entity=src_host factor="BloodHound/SharpHound detected"
-| where command_line CONTAINS "-CollectionMethod All"
-| risk score=95 factor="Full AD enumeration"
+| eval esc_full_ad_enumeration=(lower(command_line) CONTAINS "-collectionmethod all")
+| risk score=min(100, 85 + if(esc_full_ad_enumeration, 10, 0)) entity=src_host factor=concat("BloodHound/SharpHound detected", if(esc_full_ad_enumeration, "; Full AD enumeration", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

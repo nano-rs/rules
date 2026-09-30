@@ -1,0 +1,32 @@
+---
+title: new_suspicious_windows_service
+description: Detects creation of new Windows services with suspicious characteristics.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1543.003
+tags:
+  - service
+  - persistence
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Service is from known software installation"
+    - "Service binary is in Program Files with valid signature"
+  suspicious_when:
+    - "Service binary in temp or user-writable path"
+    - "Service created by cmd.exe or powershell"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security"
+| where metadata.event_code IN ("4697", "7045") OR process.name="sc.exe"
+| eval esc_suspicious_binary_path=(match(process.cmd_line, "(?i)temp|appdata|programdata") OR match(message, "(?i)temp|appdata|programdata"))
+| eval esc_shell_in_service_command=(match(process.cmd_line, "(?i)powershell|cmd /c") OR match(message, "(?i)powershell|cmd /c"))
+| risk score=min(100, 50 + if(esc_suspicious_binary_path, 25, 0) + if(esc_shell_in_service_command, 35, 0)) entity=device.hostname factor=concat("New service created", if(esc_suspicious_binary_path, "; Suspicious binary path", ""), if(esc_shell_in_service_command, "; Shell in service command", ""))
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, metadata.event_code, risk_score, risk_factors

@@ -1,0 +1,34 @@
+---
+title: icmp_data_exfiltration
+description: Detects large or frequent ICMP traffic that may indicate data exfiltration over ICMP.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: network
+mitre_tactics:
+  - TA0010
+mitre_techniques:
+  - T1048.003
+tags:
+  - icmp
+  - exfiltration
+  - covert
+ai_triage_hints:
+  ignore_when:
+    - "Network monitoring tools using ICMP"
+    - "Legitimate ping-based monitoring"
+  suspicious_when:
+    - "Large ICMP payload sizes"
+    - "Continuous ICMP to single destination"
+---
+class_uid=4001
+| where connection_info.protocol_num=1
+| where NOT is_private_ip(dst_endpoint.ip)
+| stats count, sum(traffic.bytes_out) as total_bytes, min(time) as time by src_endpoint.ip, dst_endpoint.ip
+| where count > 100 OR total_bytes > 1000000
+| eval esc_large_icmp_data_transfer=(total_bytes > 10000000)
+| risk score=min(100, 60 + if(esc_large_icmp_data_transfer, 20, 0)) entity=src_endpoint.ip factor=concat("Excessive ICMP traffic", if(esc_large_icmp_data_transfer, "; Large ICMP data transfer", ""))
+| table time, src_endpoint.ip, dst_endpoint.ip, count, total_bytes, risk_score, risk_factors

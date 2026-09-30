@@ -1,0 +1,33 @@
+---
+title: host_firewall_rule_modification
+description: Detects modifications to the Windows firewall including adding allow rules or disabling profiles.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0112
+mitre_techniques:
+  - T1686.003
+tags:
+  - firewall
+  - defense_evasion
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Firewall change is from GPO deployment"
+    - "Software installer adding legitimate firewall rule"
+  suspicious_when:
+    - "Firewall profile disabled entirely"
+    - "Allow rule for non-standard ports"
+---
+class_uid=1007 activity_id=1
+| where process.name="netsh.exe" AND process.cmd_line CONTAINS "firewall"
+| where process.cmd_line CONTAINS "add" OR process.cmd_line CONTAINS "set" OR process.cmd_line CONTAINS "disable"
+| eval esc_firewall_profile_disabled=(lower(process.cmd_line) CONTAINS "disable" AND lower(process.cmd_line) CONTAINS "profile")
+| eval esc_broad_allow_rule_added=(lower(process.cmd_line) CONTAINS "allow" AND lower(process.cmd_line) CONTAINS "any")
+| risk score=min(100, 50 + if(esc_firewall_profile_disabled, 30, 0) + if(esc_broad_allow_rule_added, 25, 0)) entity=device.hostname factor=concat("Firewall rule modified", if(esc_firewall_profile_disabled, "; Firewall profile disabled", ""), if(esc_broad_allow_rule_added, "; Broad allow rule added", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

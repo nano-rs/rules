@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=linux_audit OR source_type=endpoint_edr
 | where file_action="modify" OR file_action="create"
 | where file_path CONTAINS "authorized_keys"
-| risk score=70 entity=src_host factor="SSH authorized_keys modified"
-| where user != "root" AND user != "ansible" AND user != "puppet"
-| risk score=85 factor="Non-admin modified SSH keys"
+| eval esc_non_admin_modified_ssh_keys=(lower(user)!="root" AND lower(user)!="ansible" AND lower(user)!="puppet")
+| risk score=min(100, 70 + if(esc_non_admin_modified_ssh_keys, 15, 0)) entity=src_host factor=concat("SSH authorized_keys modified", if(esc_non_admin_modified_ssh_keys, "; Non-admin modified SSH keys", ""))
 | table timestamp, src_host, user, file_path, process_name, command_line, risk_score, risk_factors

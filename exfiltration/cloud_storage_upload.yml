@@ -28,9 +28,7 @@ source_type=proxy OR source_type=firewall
 | where bytes_out > 10000000
 | where url CONTAINS "dropbox.com" OR url CONTAINS "drive.google.com" OR url CONTAINS "mega.nz" OR url CONTAINS "mediafire.com" OR url CONTAINS "sendspace.com" OR url CONTAINS "wetransfer.com" OR url CONTAINS "file.io"
 | eval bytes_out_mb = round(bytes_out / 1000000, 2)
-| risk score=55 entity=src_host factor="Large cloud storage upload"
-| where bytes_out > 50000000
-| risk score=70 factor="Very large upload (>50MB)"
-| where bytes_out > 200000000
-| risk score=85 factor="Massive upload (>200MB)"
+| eval esc_very_large_upload_50mb=(bytes_out > 50000000)
+| eval esc_massive_upload_200mb=(bytes_out > 200000000)
+| risk score=min(100, 55 + if(esc_very_large_upload_50mb, 15, 0) + if(esc_massive_upload_200mb, 15, 0)) entity=src_host factor=concat("Large cloud storage upload", if(esc_very_large_upload_50mb, "; Very large upload (>50MB)", ""), if(esc_massive_upload_200mb, "; Massive upload (>200MB)", ""))
 | table timestamp, src_host, src_ip, user, url, bytes_out_mb, risk_score, risk_factors

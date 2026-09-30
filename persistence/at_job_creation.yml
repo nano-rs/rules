@@ -28,7 +28,6 @@ ai_triage_hints:
 source_type=linux_audit OR source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where process_name="at" OR process_name="at.exe"
-| risk score=35 entity=src_host factor="at job created"
-| where command_line CONTAINS "curl" OR command_line CONTAINS "wget" OR command_line CONTAINS "powershell"
-| risk score=65 factor="Suspicious at job command"
+| eval esc_suspicious_at_job_command=(lower(command_line) CONTAINS "curl" OR lower(command_line) CONTAINS "wget" OR lower(command_line) CONTAINS "powershell")
+| risk score=min(100, 35 + if(esc_suspicious_at_job_command, 30, 0)) entity=src_host factor=concat("at job created", if(esc_suspicious_at_job_command, "; Suspicious at job command", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

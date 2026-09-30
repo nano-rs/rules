@@ -1,0 +1,32 @@
+---
+title: critical_service_stopped
+description: Detects stopping of critical services including databases, security tools, and backup software.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0040
+mitre_techniques:
+  - T1489
+tags:
+  - service_stop
+  - ransomware_prep
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Planned maintenance or patching"
+    - "Service restart (stop followed by start)"
+  suspicious_when:
+    - "Multiple critical services stopped"
+    - "No corresponding service start"
+---
+class_uid=1007
+| where (process.name="sc.exe" AND process.cmd_line CONTAINS "stop") OR (process.name="net.exe" AND process.cmd_line CONTAINS "stop")
+| where process.cmd_line CONTAINS "sql" OR process.cmd_line CONTAINS "backup" OR process.cmd_line CONTAINS "vss" OR process.cmd_line CONTAINS "exchange" OR process.cmd_line CONTAINS "sophos" OR process.cmd_line CONTAINS "veeam"
+| eval esc_backup_service_stopped=(lower(process.cmd_line) CONTAINS "vss" OR lower(process.cmd_line) CONTAINS "backup")
+| risk score=min(100, 70 + if(esc_backup_service_stopped, 15, 0)) entity=device.hostname factor=concat("Critical service stopped", if(esc_backup_service_stopped, "; Backup service stopped", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

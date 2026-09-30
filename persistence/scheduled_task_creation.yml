@@ -30,13 +30,9 @@ ai_triage_hints:
 ---
 source_type=windows_sysmon OR source_type=windows_security
 | where event_type="scheduled_task_create" OR (process_name="schtasks.exe" AND command_line CONTAINS "/create")
-| risk score=45 entity=src_host factor="Scheduled task created"
-| where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData"
-| risk score=70 factor="Suspicious execution path"
-| where command_line CONTAINS "-enc"
-| risk score=85 factor="Encoded command in task"
-| where parent_process_name IN ("wscript.exe", "cscript.exe", "mshta.exe")
-| risk score=80 factor="Script engine parent"
-| where parent_process_name IN ("winword.exe", "excel.exe", "powerpnt.exe")
-| risk score=90 factor="Office app parent"
+| eval esc_suspicious_execution_path=(lower(command_line) CONTAINS "temp" OR lower(command_line) CONTAINS "appdata")
+| eval esc_encoded_command_in_task=(lower(command_line) CONTAINS "-enc")
+| eval esc_script_engine_parent=(lower(parent_process_name)="wscript.exe" OR lower(parent_process_name)="cscript.exe" OR lower(parent_process_name)="mshta.exe")
+| eval esc_office_app_parent=(lower(parent_process_name)="winword.exe" OR lower(parent_process_name)="excel.exe" OR lower(parent_process_name)="powerpnt.exe")
+| risk score=min(100, 45 + if(esc_suspicious_execution_path, 25, 0) + if(esc_encoded_command_in_task, 40, 0) + if(esc_script_engine_parent, 35, 0) + if(esc_office_app_parent, 45, 0)) entity=src_host factor=concat("Scheduled task created", if(esc_suspicious_execution_path, "; Suspicious execution path", ""), if(esc_encoded_command_in_task, "; Encoded command in task", ""), if(esc_script_engine_parent, "; Script engine parent", ""), if(esc_office_app_parent, "; Office app parent", ""))
 | table timestamp, src_host, user, process_name, parent_process_name, command_line, risk_score, risk_factors

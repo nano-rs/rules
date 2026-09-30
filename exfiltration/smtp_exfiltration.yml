@@ -28,7 +28,6 @@ source_type=email_gateway OR source_type=proxy
 | where event_type="email_sent" AND bytes_out > 5000000
 | where dest_host CONTAINS "gmail.com" OR dest_host CONTAINS "yahoo.com" OR dest_host CONTAINS "hotmail.com" OR dest_host CONTAINS "protonmail.com"
 | eval bytes_out_mb = round(bytes_out / 1000000, 2)
-| risk score=55 entity=user factor="Large email to personal domain"
-| where bytes_out > 20000000
-| risk score=75 factor="Very large attachment (>20MB)"
+| eval esc_very_large_attachment_20mb=(bytes_out > 20000000)
+| risk score=min(100, 55 + if(esc_very_large_attachment_20mb, 20, 0)) entity=user factor=concat("Large email to personal domain", if(esc_very_large_attachment_20mb, "; Very large attachment (>20MB)", ""))
 | table timestamp, user, src_host, dest_host, bytes_out_mb, subject, risk_score, risk_factors

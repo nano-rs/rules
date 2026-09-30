@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where parent_process_name IN ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe", "msaccess.exe")
 | where process_name IN ("cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe", "mshta.exe", "regsvr32.exe", "rundll32.exe")
-| risk score=80 entity=src_host factor="Office spawned shell"
-| where process_name IN ("powershell.exe", "pwsh.exe")
-| risk score=90 factor="Office spawned PowerShell"
+| eval esc_office_spawned_powershell=(lower(process_name)="powershell.exe" OR lower(process_name)="pwsh.exe")
+| risk score=min(100, 80 + if(esc_office_spawned_powershell, 10, 0)) entity=src_host factor=concat("Office spawned shell", if(esc_office_spawned_powershell, "; Office spawned PowerShell", ""))
 | table timestamp, src_host, user, parent_process_name, process_name, command_line, risk_score, risk_factors

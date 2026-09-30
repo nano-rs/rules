@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name IN ("net.exe", "net1.exe") AND command_line CONTAINS "group"
 | where command_line CONTAINS "domain admins" OR command_line CONTAINS "enterprise admins" OR command_line CONTAINS "schema admins" OR command_line CONTAINS "administrators"
-| risk score=55 entity=src_host factor="Admin group enumeration"
-| where command_line CONTAINS "/domain"
-| risk score=70 factor="Domain admin group query"
+| eval esc_domain_admin_group_query=(lower(command_line) CONTAINS "/domain")
+| risk score=min(100, 55 + if(esc_domain_admin_group_query, 15, 0)) entity=src_host factor=concat("Admin group enumeration", if(esc_domain_admin_group_query, "; Domain admin group query", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

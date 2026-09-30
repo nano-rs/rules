@@ -1,0 +1,34 @@
+---
+title: regsvr32_scrobj_execution
+description: Detects regsvr32 loading scrobj.dll or executing remote scriptlets (Squiblydoo attack).
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1218.010
+tags:
+  - regsvr32
+  - squiblydoo
+  - lolbin
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "regsvr32 is registering a known legitimate DLL"
+    - "Execution is part of software installation"
+  suspicious_when:
+    - "Loading scrobj.dll with /i parameter"
+    - "Remote URL in command line"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="regsvr32.exe"
+| where process.cmd_line CONTAINS "scrobj" OR process.cmd_line CONTAINS "/i:http" OR process.cmd_line CONTAINS "/i:https"
+| eval esc_remote_scriptlet=(lower(process.cmd_line) CONTAINS "http")
+| risk score=min(100, 80 + if(esc_remote_scriptlet, 10, 0)) entity=device.hostname factor=concat("Regsvr32 scriptlet execution", if(esc_remote_scriptlet, "; Remote scriptlet", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, risk_factors

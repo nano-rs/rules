@@ -1,0 +1,43 @@
+---
+title: suspicious_powershell_encoded_execution
+description: Detects PowerShell execution with suspicious command-line patterns including encoded commands, download cradles, AMSI bypass attempts, and execution policy bypasses.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+  - TA0005
+  - TA0112
+mitre_techniques:
+  - T1059.001
+  - T1027
+  - T1685
+tags:
+  - powershell
+  - obfuscation
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Command is from SCCM, Intune, or other management tools"
+    - "Script is a known IT automation (check hash against approved scripts)"
+    - "User is a developer running build scripts"
+  suspicious_when:
+    - "Multiple obfuscation techniques in single command"
+    - "Parent process is Office application or browser"
+    - "Command downloads and executes in memory (fileless)"
+    - "AMSI bypass detected alongside other suspicious patterns"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="powershell.exe" OR process.name="pwsh.exe"
+| where process.cmd_line=/-e(nc(odedcommand)?)?\s/i OR process.cmd_line CONTAINS "IEX" OR process.cmd_line CONTAINS "Invoke-Expression" OR process.cmd_line CONTAINS "downloadstring"
+| eval esc_encoded_command=match(process.cmd_line, "(?i)-enc")
+| eval esc_download_cradle=match(process.cmd_line, "(?i)iex|invoke-expression")
+| eval esc_amsi_bypass_attempt=match(process.cmd_line, "(?i)amsi")
+| eval esc_office_parent_process=(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe")
+| risk score=min(100, 50 + if(esc_encoded_command, 20, 0) + if(esc_download_cradle, 35, 0) + if(esc_amsi_bypass_attempt, 45, 0) + if(esc_office_parent_process, 45, 0)) entity=device.hostname factor=concat("Suspicious PowerShell", if(esc_encoded_command, "; Encoded command", ""), if(esc_download_cradle, "; Download cradle", ""), if(esc_amsi_bypass_attempt, "; AMSI bypass attempt", ""), if(esc_office_parent_process, "; Office parent process", ""))
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, risk_factors

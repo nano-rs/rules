@@ -29,8 +29,7 @@ source_type=proxy OR source_type=firewall
 | where url CONTAINS "dns-query" OR url CONTAINS "resolve?" OR dest_host IN ("1.1.1.1", "8.8.8.8", "9.9.9.9", "208.67.222.222")
 | where dest_port=443
 | where url CONTAINS "dns-query"
-| risk score=45 entity=src_host factor="DNS-over-HTTPS detected"
 | prevalence enrich=true window=30d
-| where host_count < 10
-| risk score=65 factor="Uncommon DoH usage"
+| eval esc_uncommon_doh_usage=(host_count < 10)
+| risk score=min(100, 45 + if(esc_uncommon_doh_usage, 20, 0)) entity=src_host factor=concat("DNS-over-HTTPS detected", if(esc_uncommon_doh_usage, "; Uncommon DoH usage", ""))
 | table timestamp, src_host, src_ip, dest_host, url, host_count, risk_score, risk_factors

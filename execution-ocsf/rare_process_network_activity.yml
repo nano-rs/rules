@@ -1,0 +1,43 @@
+---
+title: rare_process_network_connection
+description: Detects processes with low prevalence (rarely seen across the environment) making network connections. Rare executables with network activity are often indicators of malware, backdoors, or unauthorized tools.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+  - TA0011
+mitre_techniques:
+  - T1059
+  - T1071
+tags:
+  - prevalence
+  - network
+  - malware
+  - c2
+ai_triage_hints:
+  ignore_when:
+    - "Process is a newly deployed internal tool (check with IT)"
+    - "Executable is signed by a trusted vendor"
+    - "Network destination is a known CDN or software update server"
+  suspicious_when:
+    - "Process hash has zero prevalence (never seen before)"
+    - "Connection is to a non-standard port"
+    - "Destination IP is in a hosting provider range"
+    - "Process was recently dropped to disk (check file creation time)"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=4001 AND dst_endpoint.port > 0
+| where NOT is_private_ip(dst_endpoint.ip)
+| where actor.process.file.hashes.value != ""
+| stats min(time) as time, count as connections, values(dst_endpoint.ip) as dst_ips, values(dst_endpoint.port) as dst_ports by device.hostname, actor.process.name, actor.process.file.path, actor.process.file.hashes.value
+| prevalence actor.process.file.hashes.value window=30d
+| where host_count < 10
+| eval esc_very_rare_hash=(host_count < 5)
+| eval esc_non_standard_port=(NOT has(dst_ports, 80) AND NOT has(dst_ports, 443) AND NOT has(dst_ports, 53))
+| risk score=min(100, 50 + if(esc_very_rare_hash, 25, 0) + if(esc_non_standard_port, 35, 0)) entity=device.hostname factor=concat("Rare process with network", if(esc_very_rare_hash, "; Very rare hash", ""), if(esc_non_standard_port, "; Non-standard port", ""))
+| table time, device.hostname, actor.process.name, actor.process.file.path, actor.process.file.hashes.value, dst_ips, dst_ports, connections, host_count, risk_score, risk_factors

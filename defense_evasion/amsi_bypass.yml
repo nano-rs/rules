@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="powershell.exe" OR process_name="pwsh.exe"
 | where command_line CONTAINS "AmsiUtils" OR command_line CONTAINS "amsiInitFailed" OR command_line CONTAINS "AmsiScanBuffer" OR command_line CONTAINS "SetValue.*NonPublic"
-| risk score=85 entity=src_host factor="AMSI bypass attempt"
-| where command_line CONTAINS "Reflection" AND command_line CONTAINS "NonPublic"
-| risk score=90 factor="Reflection-based AMSI bypass"
+| eval esc_reflection_based_amsi_bypass=(lower(command_line) CONTAINS "reflection" AND lower(command_line) CONTAINS "nonpublic")
+| risk score=min(100, 85 + if(esc_reflection_based_amsi_bypass, 5, 0)) entity=src_host factor=concat("AMSI bypass attempt", if(esc_reflection_based_amsi_bypass, "; Reflection-based AMSI bypass", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

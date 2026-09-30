@@ -29,7 +29,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where command_line CONTAINS ":" AND command_line CONTAINS ">" AND process_name IN ("cmd.exe", "powershell.exe")
 | where command_line=/>\s*[a-zA-Z]:\\[^:]*:[^:\\]+/
-| risk score=55 entity=src_host factor="ADS creation detected"
-| where command_line CONTAINS "type" OR command_line CONTAINS "echo"
-| risk score=70 factor="Data hidden in ADS"
+| eval esc_data_hidden_in_ads=(lower(command_line) CONTAINS "type" OR lower(command_line) CONTAINS "echo")
+| risk score=min(100, 55 + if(esc_data_hidden_in_ads, 15, 0)) entity=src_host factor=concat("ADS creation detected", if(esc_data_hidden_in_ads, "; Data hidden in ADS", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

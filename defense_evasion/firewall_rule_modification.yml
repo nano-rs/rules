@@ -28,9 +28,7 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="netsh.exe" AND command_line CONTAINS "firewall"
 | where command_line CONTAINS "add" OR command_line CONTAINS "set" OR command_line CONTAINS "disable"
-| risk score=50 entity=src_host factor="Firewall rule modified"
-| where command_line CONTAINS "disable" AND command_line CONTAINS "profile"
-| risk score=80 factor="Firewall profile disabled"
-| where command_line CONTAINS "allow" AND command_line CONTAINS "any"
-| risk score=75 factor="Broad allow rule added"
+| eval esc_firewall_profile_disabled=(lower(command_line) CONTAINS "disable" AND lower(command_line) CONTAINS "profile")
+| eval esc_broad_allow_rule_added=(lower(command_line) CONTAINS "allow" AND lower(command_line) CONTAINS "any")
+| risk score=min(100, 50 + if(esc_firewall_profile_disabled, 30, 0) + if(esc_broad_allow_rule_added, 25, 0)) entity=src_host factor=concat("Firewall rule modified", if(esc_firewall_profile_disabled, "; Firewall profile disabled", ""), if(esc_broad_allow_rule_added, "; Broad allow rule added", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

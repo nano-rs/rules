@@ -29,9 +29,7 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="driver_load"
 | prevalence enrich=true window=30d
 | where host_count < 10
-| risk score=70 entity=src_host factor="Rare kernel driver"
-| where host_count < 3
-| risk score=90 factor="Very rare driver"
-| where file_path CONTAINS "Temp" OR file_path CONTAINS "AppData" OR file_path CONTAINS "Downloads"
-| risk score=95 factor="Driver from suspicious path"
+| eval esc_very_rare_driver=(host_count < 3)
+| eval esc_driver_from_suspicious_path=(lower(file_path) CONTAINS "temp" OR lower(file_path) CONTAINS "appdata" OR lower(file_path) CONTAINS "downloads")
+| risk score=min(100, 70 + if(esc_very_rare_driver, 20, 0) + if(esc_driver_from_suspicious_path, 25, 0)) entity=src_host factor=concat("Rare kernel driver", if(esc_very_rare_driver, "; Very rare driver", ""), if(esc_driver_from_suspicious_path, "; Driver from suspicious path", ""))
 | table timestamp, src_host, file_path, file_hash, host_count, risk_score, risk_factors

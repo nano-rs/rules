@@ -28,7 +28,6 @@ source_type=windows_security OR source_type=auth_logs
 | where event_type="ticket_request" AND auth_type="tgs"
 | stats count, dc(dest_host) as unique_targets, min(timestamp) as timestamp by user, src_ip
 | where count > 10 AND unique_targets > 5
-| risk score=75 entity=user factor="Multiple TGS requests"
-| where unique_targets > 15
-| risk score=90 factor="Likely Kerberoasting"
+| eval esc_likely_kerberoasting=(unique_targets > 15)
+| risk score=min(100, 75 + if(esc_likely_kerberoasting, 15, 0)) entity=user factor=concat("Multiple TGS requests", if(esc_likely_kerberoasting, "; Likely Kerberoasting", ""))
 | table timestamp, user, src_ip, count, unique_targets, risk_score, risk_factors

@@ -1,0 +1,34 @@
+---
+title: suspicious_systemd_service_creation
+description: Detects creation of new systemd service units, potentially for persistence on Linux systems.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+mitre_techniques:
+  - T1543.002
+tags:
+  - systemd
+  - linux
+  - persistence
+ai_triage_hints:
+  ignore_when:
+    - "Service created by package manager (apt, yum, dnf)"
+    - "Known orchestration tool (Ansible, Chef, Puppet)"
+  suspicious_when:
+    - "Service runs shell commands or scripts"
+    - "Service restarts automatically on failure"
+---
+metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr"
+| where class_uid=1001 AND activity_id=1
+| where file.path CONTAINS "/etc/systemd/" OR file.path CONTAINS "/lib/systemd/"
+| where file.path CONTAINS ".service"
+| prevalence enrich=true window=30d
+| eval esc_rare_systemd_service=(host_count < 5)
+| risk score=min(100, 55 + if(esc_rare_systemd_service, 25, 0)) entity=device.hostname factor=concat("New systemd service", if(esc_rare_systemd_service, "; Rare systemd service", ""))
+| table time, device.hostname, actor.user.name, file.path, actor.process.name, actor.process.cmd_line, risk_score, risk_factors

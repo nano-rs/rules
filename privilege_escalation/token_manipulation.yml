@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create" OR event_type="process_access"
 | where command_line CONTAINS "token" AND (command_line CONTAINS "duplicate" OR command_line CONTAINS "impersonate" OR command_line CONTAINS "assign")
-| risk score=70 entity=src_host factor="Token manipulation"
-| where process_name NOT IN ("lsass.exe", "csrss.exe", "services.exe", "svchost.exe")
-| risk score=85 factor="Unusual token manipulator"
+| eval esc_unusual_token_manipulator=(lower(process_name)!="lsass.exe" AND lower(process_name)!="csrss.exe" AND lower(process_name)!="services.exe" AND lower(process_name)!="svchost.exe")
+| risk score=min(100, 70 + if(esc_unusual_token_manipulator, 15, 0)) entity=src_host factor=concat("Token manipulation", if(esc_unusual_token_manipulator, "; Unusual token manipulator", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

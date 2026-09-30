@@ -1,0 +1,31 @@
+---
+title: usb_mass_storage_data_copy
+description: Detects USB mass storage device connections and potential data copy operations.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0010
+mitre_techniques:
+  - T1052.001
+tags:
+  - usb
+  - removable_media
+  - exfiltration
+ai_triage_hints:
+  ignore_when:
+    - "Known authorized USB device"
+    - "IT admin using USB for system maintenance"
+  suspicious_when:
+    - "USB device connected to sensitive system"
+    - "Large file copies after USB connection"
+---
+class_uid=1005 OR class_uid=201001 OR class_uid=201002
+| where message CONTAINS "Mass Storage" OR message CONTAINS "USBSTOR" OR message CONTAINS "RemovableMedia" OR reg_key.path CONTAINS "USBSTOR" OR module.file.path CONTAINS "USBSTOR"
+| eval esc_usb_on_server_system=(lower(device.hostname) CONTAINS "srv" OR lower(device.hostname) CONTAINS "server" OR lower(device.hostname) CONTAINS "dc")
+| risk score=min(100, 40 + if(esc_usb_on_server_system, 30, 0)) entity=device.hostname factor=concat("USB mass storage connected", if(esc_usb_on_server_system, "; USB on server system", ""))
+| table time, device.hostname, actor.user.name, message, reg_key.path, risk_score, risk_factors

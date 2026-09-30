@@ -1,0 +1,32 @@
+---
+title: base64_encoded_data_transfer
+description: Detects command-line tools sending base64-encoded data to external hosts, potential encoded exfiltration.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: endpoint
+mitre_tactics:
+  - TA0010
+mitre_techniques:
+  - T1048
+tags:
+  - encoding
+  - exfiltration
+  - base64
+ai_triage_hints:
+  ignore_when:
+    - "Known API client sending encoded payloads"
+    - "Development or testing activity"
+  suspicious_when:
+    - "Base64 data sent to external IP"
+    - "Large encoded payload in URL parameter"
+---
+class_uid=1007
+| where (process.name="curl.exe" OR process.name="wget.exe" OR process.name="Invoke-WebRequest") AND process.cmd_line CONTAINS "base64"
+| where process.cmd_line CONTAINS "http"
+| eval esc_encoded_post_to_external=(lower(process.cmd_line) CONTAINS "post")
+| risk score=min(100, 60 + if(esc_encoded_post_to_external, 15, 0)) entity=device.hostname factor=concat("Encoded data transfer", if(esc_encoded_post_to_external, "; Encoded POST to external", ""))
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

@@ -30,7 +30,6 @@ source_type=proxy
 | where count > 50 AND avg_out < 1000
 | prevalence enrich=true window=30d
 | where host_count < 5
-| risk score=60 entity=src_host factor="Suspicious proxy pattern"
-| where host_count < 2
-| risk score=80 factor="Rare destination with beacon-like traffic"
+| eval esc_rare_destination_with_beacon_like=(host_count < 2)
+| risk score=min(100, 60 + if(esc_rare_destination_with_beacon_like, 20, 0)) entity=src_host factor=concat("Suspicious proxy pattern", if(esc_rare_destination_with_beacon_like, "; Rare destination with beacon-like traffic", ""))
 | table timestamp, src_host, dest_host, count, total_out, avg_out, host_count, risk_score, risk_factors

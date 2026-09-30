@@ -37,9 +37,7 @@ source_type=windows_security OR source_type=auth_logs
     [dest_host=/^ws/i OR dest_host=/^wks/i OR dest_host=/^workstation/i OR dest_host=/^desktop/i OR dest_host=/^laptop/i]
     [dest_host=/^srv/i OR dest_host=/^server/i OR dest_host=/^app/i OR dest_host=/^web/i OR dest_host=/^db/i]
     [dest_host=/^dc/i OR dest_host=/^domain/i OR dest_host=/^ad/i OR dest_host=/^pdc/i OR dest_host=/^bdc/i]
-| risk score=80 entity=user factor="Workstation to DC progression"
-| where sequence_duration_seconds < 300
-| risk score=90 factor="Rapid lateral movement"
-| where step3_auth_type = "ntlm"
-| risk score=95 factor="NTLM authentication"
+| eval esc_rapid_lateral_movement=(sequence_duration_seconds < 300)
+| eval esc_ntlm_authentication=(lower(step3_auth_type)="ntlm")
+| risk score=min(100, 80 + if(esc_rapid_lateral_movement, 10, 0) + if(esc_ntlm_authentication, 15, 0)) entity=user factor=concat("Workstation to DC progression", if(esc_rapid_lateral_movement, "; Rapid lateral movement", ""), if(esc_ntlm_authentication, "; NTLM authentication", ""))
 | table timestamp, user, step1_src_ip, step1_dest_host, step2_dest_host, step3_dest_host, step3_auth_type, sequence_duration_seconds, risk_score, risk_factors

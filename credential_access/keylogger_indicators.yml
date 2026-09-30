@@ -30,7 +30,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where command_line CONTAINS "SetWindowsHookEx" OR command_line CONTAINS "GetAsyncKeyState" OR command_line CONTAINS "GetKeyState"
 | prevalence enrich=true window=30d
 | where host_count < 10
-| risk score=70 entity=src_host factor="Potential keylogger"
-| where host_count < 3
-| risk score=90 factor="Rare process with input capture"
+| eval esc_rare_process_with_input_capture=(host_count < 3)
+| risk score=min(100, 70 + if(esc_rare_process_with_input_capture, 20, 0)) entity=src_host factor=concat("Potential keylogger", if(esc_rare_process_with_input_capture, "; Rare process with input capture", ""))
 | table timestamp, src_host, process_name, process_hash, host_count, risk_score, risk_factors

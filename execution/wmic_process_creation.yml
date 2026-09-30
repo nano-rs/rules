@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="wmic.exe"
 | where command_line CONTAINS "/node:" AND command_line CONTAINS "command_line" AND command_line CONTAINS "call" AND command_line CONTAINS "create"
-| risk score=75 entity=src_host factor="Remote WMIC process creation"
-| where command_line CONTAINS "powershell" OR command_line CONTAINS "cmd.exe"
-| risk score=90 factor="Shell spawned via WMIC"
+| eval esc_shell_spawned_via_wmic=(lower(command_line) CONTAINS "powershell" OR lower(command_line) CONTAINS "cmd.exe")
+| risk score=min(100, 75 + if(esc_shell_spawned_via_wmic, 15, 0)) entity=src_host factor=concat("Remote WMIC process creation", if(esc_shell_spawned_via_wmic, "; Shell spawned via WMIC", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

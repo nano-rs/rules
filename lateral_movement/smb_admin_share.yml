@@ -28,10 +28,8 @@ ai_triage_hints:
 source_type=windows_security OR source_type=endpoint_edr
 | where event_type="share_access"
 | where message CONTAINS "C$" OR message CONTAINS "ADMIN$" OR message CONTAINS "IPC$"
-| risk score=45 entity=src_host factor="Admin share access"
-| where src_host CONTAINS "ws" OR src_host CONTAINS "desktop" OR src_host CONTAINS "laptop"
-| risk score=65 factor="Workstation accessing admin share"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=80 factor="Unusual admin share access"
+| eval esc_workstation_accessing_admin_share=(lower(src_host) CONTAINS "ws" OR lower(src_host) CONTAINS "desktop" OR lower(src_host) CONTAINS "laptop")
+| eval esc_unusual_admin_share_access=(host_count < 5)
+| risk score=min(100, 45 + if(esc_workstation_accessing_admin_share, 20, 0) + if(esc_unusual_admin_share_access, 35, 0)) entity=src_host factor=concat("Admin share access", if(esc_workstation_accessing_admin_share, "; Workstation accessing admin share", ""), if(esc_unusual_admin_share_access, "; Unusual admin share access", ""))
 | table timestamp, src_host, src_ip, user, dest_host, message, host_count, risk_score, risk_factors

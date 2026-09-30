@@ -29,9 +29,7 @@ ai_triage_hints:
 ---
 source_type=azure_ad OR source_type=okta
 | where event_type="consent_grant" OR event_type="app_authorize"
-| risk score=55 entity=user factor="OAuth consent granted"
-| where message CONTAINS "Mail.Read" OR message CONTAINS "Files.ReadWrite" OR message CONTAINS "User.Read.All"
-| risk score=75 factor="Sensitive permissions granted"
-| where message CONTAINS "Application" AND message NOT CONTAINS "verified"
-| risk score=85 factor="Unverified application"
+| eval esc_sensitive_permissions_granted=(lower(message) CONTAINS "mail.read" OR lower(message) CONTAINS "files.readwrite" OR lower(message) CONTAINS "user.read.all")
+| eval esc_unverified_application=(lower(message) CONTAINS "application" AND (lower(message) CONTAINS "verified") = false)
+| risk score=min(100, 55 + if(esc_sensitive_permissions_granted, 20, 0) + if(esc_unverified_application, 30, 0)) entity=user factor=concat("OAuth consent granted", if(esc_sensitive_permissions_granted, "; Sensitive permissions granted", ""), if(esc_unverified_application, "; Unverified application", ""))
 | table timestamp, user, src_ip, message, risk_score, risk_factors

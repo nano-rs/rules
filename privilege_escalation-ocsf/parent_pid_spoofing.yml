@@ -1,0 +1,31 @@
+---
+title: parent_pid_spoofing_detection
+description: Detects processes where the parent PID has been spoofed to appear as a different process.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0004
+  - TA0005
+mitre_techniques:
+  - T1134.004
+tags:
+  - ppid_spoofing
+  - evasion
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Process is launched by a known container or sandbox"
+  suspicious_when:
+    - "Child process doesn't match expected parent"
+    - "svchost.exe with unusual parent"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="svchost.exe" AND actor.process.name NOT IN ("services.exe", "MsMpEng.exe")
+| risk score=80 entity=device.hostname factor="svchost unusual parent"
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors

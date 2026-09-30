@@ -30,7 +30,6 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create" OR event_type="service_create"
 | where process_name="psexec.exe" OR process_name="psexesvc.exe" OR command_line CONTAINS "PSEXESVC" OR command_line CONTAINS "\\\\*\\admin$"
-| risk score=65 entity=src_host factor="PsExec activity"
-| where command_line CONTAINS "powershell" OR command_line CONTAINS "cmd /c"
-| risk score=80 factor="Remote shell via PsExec"
+| eval esc_remote_shell_via_psexec=(lower(command_line) CONTAINS "powershell" OR lower(command_line) CONTAINS "cmd /c")
+| risk score=min(100, 65 + if(esc_remote_shell_via_psexec, 15, 0)) entity=src_host factor=concat("PsExec activity", if(esc_remote_shell_via_psexec, "; Remote shell via PsExec", ""))
 | table timestamp, src_host, user, dest_host, command_line, risk_score, risk_factors

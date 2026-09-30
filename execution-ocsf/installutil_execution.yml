@@ -1,0 +1,33 @@
+---
+title: installutil_suspicious_execution
+description: Detects InstallUtil.exe being used to execute code, bypassing application whitelisting.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1218.004
+tags:
+  - installutil
+  - lolbin
+  - dotnet
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "InstallUtil is installing a known .NET service"
+  suspicious_when:
+    - "Target assembly is in temp or user directory"
+    - "Using /U (uninstall) parameter for code execution"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="InstallUtil.exe"
+| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR process.cmd_line CONTAINS "/U" OR process.cmd_line CONTAINS "/LogFile="
+| eval esc_uninstall_parameter_abuse=(lower(process.cmd_line) CONTAINS "/u")
+| risk score=min(100, 75 + if(esc_uninstall_parameter_abuse, 10, 0)) entity=device.hostname factor=concat("Suspicious InstallUtil execution", if(esc_uninstall_parameter_abuse, "; Uninstall parameter abuse", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

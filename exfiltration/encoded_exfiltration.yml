@@ -28,7 +28,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where (process_name="curl.exe" OR process_name="wget.exe" OR process_name="Invoke-WebRequest") AND command_line CONTAINS "base64"
 | where command_line CONTAINS "http"
-| risk score=60 entity=src_host factor="Encoded data transfer"
-| where command_line CONTAINS "POST"
-| risk score=75 factor="Encoded POST to external"
+| eval esc_encoded_post_to_external=(lower(command_line) CONTAINS "post")
+| risk score=min(100, 60 + if(esc_encoded_post_to_external, 15, 0)) entity=src_host factor=concat("Encoded data transfer", if(esc_encoded_post_to_external, "; Encoded POST to external", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

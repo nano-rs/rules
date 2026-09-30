@@ -1,0 +1,43 @@
+---
+title: large_outbound_data_transfer
+description: Detects large outbound data transfers to external IP addresses, especially during off-hours or to non-standard ports.
+author: nano.rs
+severity: high
+mode: staging
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 1h
+folder: network
+mitre_tactics:
+  - TA0010
+mitre_techniques:
+  - T1048
+  - T1041
+tags:
+  - exfiltration
+  - data_theft
+  - network
+ai_triage_hints:
+  ignore_when:
+    - "Destination is a known backup or cloud storage service"
+    - "Transfer is to a corporate-owned external IP"
+    - "User regularly performs large data transfers (data team)"
+  suspicious_when:
+    - "Destination is a VPS or hosting provider"
+    - "Transfer occurs at unusual hours for this user"
+    - "Data was recently accessed from sensitive shares"
+    - "Multiple large transfers to different destinations"
+---
+class_uid=4001 OR class_uid=4002
+| where traffic.bytes_out > 50000000
+| where NOT is_private_ip(dst_endpoint.ip)
+| eval bytes_out_mb = round(traffic.bytes_out / 1000000, 2)
+| eval hour = tonumber(strftime(time, "%H"))
+| eval day = tonumber(strftime(time, "%w"))
+| eval esc_very_large_transfer_100mb=(traffic.bytes_out > 100000000)
+| eval esc_massive_transfer_500mb=(traffic.bytes_out > 500000000)
+| eval esc_non_standard_port=(dst_endpoint.port!=80 AND dst_endpoint.port!=443 AND dst_endpoint.port!=22)
+| eval esc_off_hours_transfer=(hour < 6 OR hour > 20)
+| eval esc_weekend_transfer=(day = 0 OR day = 6)
+| risk score=min(100, 50 + if(esc_very_large_transfer_100mb, 15, 0) + if(esc_massive_transfer_500mb, 15, 0) + if(esc_non_standard_port, 25, 0) + if(esc_off_hours_transfer, 30, 0) + if(esc_weekend_transfer, 35, 0)) entity=src_endpoint.ip factor=concat("Large outbound transfer", if(esc_very_large_transfer_100mb, "; Very large transfer (>100MB)", ""), if(esc_massive_transfer_500mb, "; Massive transfer (>500MB)", ""), if(esc_non_standard_port, "; Non-standard port", ""), if(esc_off_hours_transfer, "; Off-hours transfer", ""), if(esc_weekend_transfer, "; Weekend transfer", ""))
+| table time, src_endpoint.ip, src_endpoint.hostname, actor.user.name, dst_endpoint.ip, dst_endpoint.port, bytes_out_mb, hour, risk_score, risk_factors

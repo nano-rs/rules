@@ -1,0 +1,33 @@
+---
+title: office_application_spawning_child_process
+description: Detects Microsoft Office applications spawning suspicious child processes like cmd, powershell, or scripting engines.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1204.002
+tags:
+  - office
+  - macro
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Child process is known Office add-in or plugin"
+    - "User is developer with VBA macros"
+  suspicious_when:
+    - "Child is powershell, cmd, wscript, or cscript"
+    - "Child process makes network connections"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where actor.process.name IN ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe", "msaccess.exe")
+| where process.name IN ("cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe", "mshta.exe", "regsvr32.exe", "rundll32.exe")
+| eval esc_office_spawned_powershell=(lower(process.name)="powershell.exe" OR lower(process.name)="pwsh.exe")
+| risk score=min(100, 80 + if(esc_office_spawned_powershell, 10, 0)) entity=device.hostname factor=concat("Office spawned shell", if(esc_office_spawned_powershell, "; Office spawned PowerShell", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, risk_factors

@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where parent_process_name="services.exe"
 | where process_name IN ("cmd.exe", "powershell.exe", "pwsh.exe")
-| risk score=70 entity=src_host factor="Shell via services"
-| where command_line CONTAINS "-enc" OR command_line CONTAINS "downloadstring" OR command_line CONTAINS "IEX"
-| risk score=90 factor="Suspicious shell command"
+| eval esc_suspicious_shell_command=(lower(command_line) CONTAINS "-enc" OR lower(command_line) CONTAINS "downloadstring" OR lower(command_line) CONTAINS "iex")
+| risk score=min(100, 70 + if(esc_suspicious_shell_command, 20, 0)) entity=src_host factor=concat("Shell via services", if(esc_suspicious_shell_command, "; Suspicious shell command", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

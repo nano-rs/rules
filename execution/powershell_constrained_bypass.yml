@@ -29,7 +29,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="powershell.exe" OR process_name="pwsh.exe"
 | where command_line CONTAINS "__PSLockdownPolicy" OR command_line CONTAINS "FullLanguage" OR command_line CONTAINS "LanguageMode" OR command_line CONTAINS "Set-ExecutionPolicy Bypass"
-| risk score=80 entity=src_host factor="CLM bypass attempt"
-| where command_line CONTAINS "Add-Type" OR command_line CONTAINS "[Reflection.Assembly]"
-| risk score=90 factor="Reflection-based bypass"
+| eval esc_reflection_based_bypass=(lower(command_line) CONTAINS "add-type" OR lower(command_line) CONTAINS "[reflection.assembly]")
+| risk score=min(100, 80 + if(esc_reflection_based_bypass, 10, 0)) entity=src_host factor=concat("CLM bypass attempt", if(esc_reflection_based_bypass, "; Reflection-based bypass", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

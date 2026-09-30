@@ -27,7 +27,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where (process_name="msxsl.exe") OR (process_name="wmic.exe" AND command_line CONTAINS "/format:")
 | where command_line CONTAINS ".xsl"
-| risk score=80 entity=src_host factor="XSL script processing"
-| where command_line CONTAINS "http"
-| risk score=90 factor="Remote XSL"
+| eval esc_remote_xsl=(lower(command_line) CONTAINS "http")
+| risk score=min(100, 80 + if(esc_remote_xsl, 10, 0)) entity=src_host factor=concat("XSL script processing", if(esc_remote_xsl, "; Remote XSL", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

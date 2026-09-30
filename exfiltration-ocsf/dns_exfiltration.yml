@@ -1,0 +1,31 @@
+---
+title: dns_data_exfiltration
+description: Detects DNS tunneling and exfiltration via long or encoded DNS queries.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: network
+mitre_tactics:
+  - TA0010
+mitre_techniques:
+  - T1048.001
+tags:
+  - dns
+  - tunneling
+  - exfiltration
+ai_triage_hints:
+  ignore_when:
+    - "DNS query is for known CDN or analytics service"
+    - "DKIM or SPF TXT record lookups"
+  suspicious_when:
+    - "Very long subdomain labels (>30 chars)"
+    - "High volume of unique subdomains for one domain"
+---
+class_uid=4003
+| where query.hostname!="" AND length(query.hostname) > 60
+| eval esc_high_entropy_dns_query=match(query.hostname, "(?i)^[a-z0-9]{30,}\.")
+| risk score=min(100, 70 + if(esc_high_entropy_dns_query, 15, 0)) entity=src_endpoint.hostname factor=concat("Long DNS query (possible tunneling)", if(esc_high_entropy_dns_query, "; High entropy DNS query", ""))
+| table time, src_endpoint.hostname, src_endpoint.ip, query.hostname, risk_score, risk_factors

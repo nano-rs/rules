@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="rundll32.exe"
 | where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData" OR command_line CONTAINS "Downloads" OR command_line CONTAINS "ProgramData"
-| risk score=60 entity=src_host factor="Rundll32 unusual path"
-| where command_line CONTAINS "javascript" OR command_line CONTAINS "vbscript"
-| risk score=90 factor="Script protocol handler"
+| eval esc_script_protocol_handler=(lower(command_line) CONTAINS "javascript" OR lower(command_line) CONTAINS "vbscript")
+| risk score=min(100, 60 + if(esc_script_protocol_handler, 30, 0)) entity=src_host factor=concat("Rundll32 unusual path", if(esc_script_protocol_handler, "; Script protocol handler", ""))
 | table timestamp, src_host, user, parent_process_name, command_line, risk_score, risk_factors

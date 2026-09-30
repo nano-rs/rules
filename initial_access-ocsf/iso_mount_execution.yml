@@ -1,0 +1,33 @@
+---
+title: iso_image_mount_and_execution
+description: Detects ISO/IMG file mounting followed by execution of contained files, a common phishing delivery mechanism.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0112
+mitre_techniques:
+  - T1553.005
+tags:
+  - iso
+  - motw_bypass
+  - phishing
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Known software distributed as ISO"
+    - "IT admin mounting system images"
+  suspicious_when:
+    - "ISO from email or download"
+    - "LNK or script inside mounted ISO"
+---
+metadata.log_source IN ("endpoint_edr", "windows_sysmon") class_uid=1007 activity_id=1
+| where process.file.path=/^[D-Z]:/
+| where process.name=/(\.exe|\.lnk|\.bat|\.cmd|\.vbs|\.js|\.ps1)$/i
+| eval esc_user_initiated_iso_execution=(lower(actor.process.name)="explorer.exe")
+| risk score=min(100, 65 + if(esc_user_initiated_iso_execution, 15, 0)) entity=device.hostname factor=concat("Execution from mounted image", if(esc_user_initiated_iso_execution, "; User-initiated ISO execution", ""))
+| table time, device.hostname, actor.user.name, process.name, process.file.path, actor.process.name, process.cmd_line, risk_score, risk_factors

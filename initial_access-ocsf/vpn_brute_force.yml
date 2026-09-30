@@ -1,0 +1,34 @@
+---
+title: vpn_brute_force_attempt
+description: Detects brute force attacks against VPN endpoints from a single source.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 15m
+folder: network
+mitre_tactics:
+  - TA0006
+mitre_techniques:
+  - T1110
+tags:
+  - vpn
+  - brute_force
+  - perimeter
+ai_triage_hints:
+  ignore_when:
+    - "User with connectivity issues"
+    - "Known vulnerability scanner"
+  suspicious_when:
+    - "Many failures from single IP"
+    - "Targeting multiple accounts"
+---
+metadata.log_source IN ("vpn_logs", "firewall", "auth_logs", "windows_event") class_uid=3002 activity_id=1 status="Failure"
+| where message CONTAINS "VPN" OR dst_endpoint.port IN (443, 1194, 500, 4500)
+| stats count, dc(user.name) as unique_users, min(time) as time by src_endpoint.ip
+| where count > 20
+| eval esc_multi_user_vpn_brute_force=(unique_users > 5)
+| eval esc_large_scale_vpn_attack=(unique_users > 20)
+| risk score=min(100, 65 + if(esc_multi_user_vpn_brute_force, 15, 0) + if(esc_large_scale_vpn_attack, 10, 0)) entity=src_endpoint.ip factor=concat("VPN brute force", if(esc_multi_user_vpn_brute_force, "; Multi-user VPN brute force", ""), if(esc_large_scale_vpn_attack, "; Large-scale VPN attack", ""))
+| table time, src_endpoint.ip, count, unique_users, risk_score, risk_factors

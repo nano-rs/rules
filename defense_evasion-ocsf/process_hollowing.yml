@@ -1,0 +1,30 @@
+---
+title: process_hollowing_indicators
+description: Detects indicators of process hollowing where a legitimate process is suspended, its memory replaced, then resumed.
+author: nano.rs
+severity: high
+mode: live
+detection_mode: scheduled
+schedule: "*/3 * * * *"
+lookback: 10m
+folder: endpoint
+mitre_tactics:
+  - TA0005
+mitre_techniques:
+  - T1055.012
+tags:
+  - hollowing
+  - injection
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Known packing or anti-tampering software"
+  suspicious_when:
+    - "Legitimate process loaded from unusual path"
+    - "Process image doesn't match on-disk binary"
+---
+class_uid=1007 activity_id=1
+| where process.name IN ("svchost.exe", "explorer.exe", "RuntimeBroker.exe", "dllhost.exe")
+| where process.file.path NOT CONTAINS "\\Windows\\"
+| risk score=90 entity=device.hostname factor="Process hollowing indicator"
+| table time, device.hostname, process.name, process.file.path, actor.process.name, process.cmd_line, risk_score, risk_factors

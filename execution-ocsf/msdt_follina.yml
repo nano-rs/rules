@@ -1,0 +1,34 @@
+---
+title: msdt_diagnostic_tool_abuse
+description: Detects Microsoft Support Diagnostic Tool (msdt.exe) execution with suspicious parameters, associated with Follina and similar exploits.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0002
+mitre_techniques:
+  - T1203
+tags:
+  - msdt
+  - follina
+  - exploit
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "User manually launched diagnostics from control panel"
+    - "IT support initiated the diagnostic session"
+  suspicious_when:
+    - "msdt launched by Office application"
+    - "Command contains PCWDiagnostic or IT_BrowseForFile"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1007 AND activity_id=1
+| where process.name="msdt.exe"
+| where process.cmd_line CONTAINS "PCWDiagnostic" OR process.cmd_line CONTAINS "IT_BrowseForFile" OR process.cmd_line CONTAINS "ms-msdt:"
+| eval esc_office_parent_likely_exploitation=(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe")
+| risk score=min(100, 90 + if(esc_office_parent_likely_exploitation, 5, 0)) entity=device.hostname factor=concat("MSDT abuse (Follina-like)", if(esc_office_parent_likely_exploitation, "; Office parent - likely exploitation", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, risk_factors

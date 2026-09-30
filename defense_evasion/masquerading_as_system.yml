@@ -27,7 +27,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name IN ("svchost.exe", "csrss.exe", "lsass.exe", "smss.exe", "wininit.exe", "taskhost.exe", "conhost.exe")
 | where process_path NOT CONTAINS "\\Windows\\System32\\" AND process_path NOT CONTAINS "\\Windows\\SysWOW64\\"
-| risk score=85 entity=src_host factor="System process from wrong path"
-| where process_path CONTAINS "Temp" OR process_path CONTAINS "AppData"
-| risk score=95 factor="System name in user directory"
+| eval esc_system_name_in_user_directory=(lower(process_path) CONTAINS "temp" OR lower(process_path) CONTAINS "appdata")
+| risk score=min(100, 85 + if(esc_system_name_in_user_directory, 10, 0)) entity=src_host factor=concat("System process from wrong path", if(esc_system_name_in_user_directory, "; System name in user directory", ""))
 | table timestamp, src_host, user, process_name, process_path, parent_process_name, risk_score, risk_factors

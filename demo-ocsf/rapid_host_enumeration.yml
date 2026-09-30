@@ -29,6 +29,6 @@ ai_triage_hints:
     - "User is not a domain admin or IT staff"
     - "Parent process is cmd.exe spawned from an unusual location"
 ---
-source_type="windows_sysmon" (process.name="whoami.exe" OR process.name="ipconfig.exe" OR process.name="net.exe" OR process.name="nltest.exe" OR process.name="systeminfo.exe" OR process.name="tasklist.exe")
-| stats count() as recon_commands, dc(process.name) as unique_tools, values(process.name) as tools, values(process.cmd_line) as commands, min(timestamp) as first_seen, max(timestamp) as last_seen by device.hostname, actor.user.name
+metadata.log_source="windows_sysmon" class_uid=1007 activity_id=1 (process.name="whoami.exe" OR process.name="ipconfig.exe" OR process.name="net.exe" OR process.name="nltest.exe" OR process.name="systeminfo.exe" OR process.name="tasklist.exe")
+| stats count() as recon_commands, dc(process.name) as unique_tools, values(process.name) as tools, values(process.cmd_line) as commands, min(time) as first_seen, max(time) as last_seen by device.hostname, actor.user.name
 | where recon_commands >= 3 AND unique_tools >= 3

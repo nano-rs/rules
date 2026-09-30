@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where process_name IN ("sdelete.exe", "cipher.exe", "shred", "dd") OR command_line CONTAINS "format /q" OR command_line CONTAINS "diskpart" AND command_line CONTAINS "clean"
-| risk score=80 entity=src_host factor="Disk wipe tool detected"
-| where command_line CONTAINS "/dev/sda" OR command_line CONTAINS "PhysicalDrive" OR command_line CONTAINS "clean all"
-| risk score=95 factor="Physical disk wipe"
+| eval esc_physical_disk_wipe=(lower(command_line) CONTAINS "/dev/sda" OR lower(command_line) CONTAINS "physicaldrive" OR lower(command_line) CONTAINS "clean all")
+| risk score=min(100, 80 + if(esc_physical_disk_wipe, 15, 0)) entity=src_host factor=concat("Disk wipe tool detected", if(esc_physical_disk_wipe, "; Physical disk wipe", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

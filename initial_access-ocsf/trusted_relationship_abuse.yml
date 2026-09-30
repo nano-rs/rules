@@ -1,0 +1,34 @@
+---
+title: trusted_relationship_lateral_access
+description: Detects access from partner or vendor networks that deviates from normal patterns.
+author: nano.rs
+severity: medium
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: network
+mitre_tactics:
+  - TA0001
+mitre_techniques:
+  - T1199
+tags:
+  - supply_chain
+  - partner
+  - trusted_access
+ai_triage_hints:
+  ignore_when:
+    - "Normal partner access during business hours"
+    - "Known vendor maintenance window"
+  suspicious_when:
+    - "Access to systems outside normal scope"
+    - "Off-hours access from partner network"
+---
+metadata.log_source IN ("vpn_logs", "firewall", "auth_logs", "windows_event") class_uid=3002 activity_id=1 status="Success"
+| where user.name CONTAINS "vendor" OR user.name CONTAINS "partner" OR user.name CONTAINS "contractor" OR user.name CONTAINS "ext_"
+| eval hour = tonumber(strftime(time, "%H"))
+| eval day = tonumber(strftime(time, "%w"))
+| eval esc_off_hours_third_party_access=(hour < 7 OR hour > 19)
+| eval esc_weekend_third_party_access=(day = 0 OR day = 6)
+| risk score=min(100, 35 + if(esc_off_hours_third_party_access, 30, 0) + if(esc_weekend_third_party_access, 40, 0)) entity=user.name factor=concat("Third-party access", if(esc_off_hours_third_party_access, "; Off-hours third-party access", ""), if(esc_weekend_third_party_access, "; Weekend third-party access", ""))
+| table time, user.name, src_endpoint.ip, dst_endpoint.hostname, hour, risk_score, risk_factors

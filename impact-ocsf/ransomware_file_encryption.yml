@@ -1,0 +1,34 @@
+---
+title: ransomware_file_encryption_pattern
+description: Detects rapid file modification and renaming patterns consistent with ransomware encryption.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/1 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0040
+mitre_techniques:
+  - T1486
+tags:
+  - ransomware
+  - encryption
+  - critical
+ai_triage_hints:
+  ignore_when:
+    - "Known encryption or compression tool"
+    - "Legitimate bulk file rename operation"
+  suspicious_when:
+    - "Many files renamed with new extensions rapidly"
+    - "Ransom note files created"
+---
+class_uid=1001
+| where activity_id=5 OR activity_id=3 OR activity_id=10
+| where file.path=/(\.encrypted|\.locked|\.crypto|\.crypt|\.enc|\.pay|\.ransom)$/i
+| stats count, min(time) as time, values(actor.user.name) as user by device.hostname, actor.process.name
+| where count > 10
+| eval esc_active_ransomware_encryption=(count > 100)
+| risk score=min(100, 95 + if(esc_active_ransomware_encryption, 4, 0)) entity=device.hostname factor=concat("Ransomware encryption pattern", if(esc_active_ransomware_encryption, "; Active ransomware encryption", ""))
+| table time, device.hostname, user, actor.process.name, count, risk_score, risk_factors

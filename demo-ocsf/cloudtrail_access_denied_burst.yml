@@ -28,6 +28,6 @@ ai_triage_hints:
     - "User has no MFA and is accessing from an unusual region"
     - "Same user also has successful destructive operations"
 ---
-source_type="aws_cloudtrail" status="Failure"
-| stats count() as denied_count, dc(api.operation) as unique_actions, values(api.operation) as actions_attempted, values(src_endpoint.ip) as source_ips, min(timestamp) as first_seen, max(timestamp) as last_seen by actor.user.name
+metadata.log_source="aws_cloudtrail" class_uid=6003 status="Failure"
+| stats count() as denied_count, dc(api.operation) as unique_actions, values(api.operation) as actions_attempted, values(src_endpoint.ip) as source_ips, min(time) as first_seen, max(time) as last_seen by actor.user.name
 | where denied_count > 3

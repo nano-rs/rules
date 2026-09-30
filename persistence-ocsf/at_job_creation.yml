@@ -1,0 +1,33 @@
+---
+title: at_job_scheduled_execution
+description: Detects creation of at jobs for one-time scheduled execution, sometimes used for persistence or delayed execution.
+author: nano.rs
+severity: low
+mode: live
+detection_mode: scheduled
+schedule: "*/10 * * * *"
+lookback: 30m
+folder: endpoint
+mitre_tactics:
+  - TA0003
+  - TA0002
+mitre_techniques:
+  - T1053.002
+tags:
+  - at_job
+  - scheduled
+  - cross_platform
+ai_triage_hints:
+  ignore_when:
+    - "at job is from known automation workflow"
+    - "IT admin scheduling maintenance task"
+  suspicious_when:
+    - "Job runs shell commands with network activity"
+    - "Created by non-admin user"
+---
+metadata.log_source="linux_audit" OR metadata.log_source="endpoint_edr" OR metadata.log_source="windows_sysmon"
+| where class_uid=1007 AND activity_id=1
+| where process.name="at" OR process.name="at.exe"
+| eval esc_suspicious_at_job_command=(lower(process.cmd_line) CONTAINS "curl" OR lower(process.cmd_line) CONTAINS "wget" OR lower(process.cmd_line) CONTAINS "powershell")
+| risk score=min(100, 35 + if(esc_suspicious_at_job_command, 30, 0)) entity=device.hostname factor=concat("at job created", if(esc_suspicious_at_job_command, "; Suspicious at job command", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

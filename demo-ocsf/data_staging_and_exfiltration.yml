@@ -28,6 +28,6 @@ ai_triage_hints:
     - "Compress-Archive targets sensitive file types (docx, xlsx, pdf)"
     - "Followed by certutil encoding or network upload"
 ---
-source_type="windows_sysmon" (process.name="robocopy.exe" OR (process.name="powershell.exe" process.cmd_line CONTAINS "Compress-Archive") OR (process.name="certutil.exe" process.cmd_line CONTAINS "-encode"))
+metadata.log_source="windows_sysmon" class_uid=1007 activity_id=1 (process.name="robocopy.exe" OR (process.name="powershell.exe" process.cmd_line CONTAINS "Compress-Archive") OR (process.name="certutil.exe" process.cmd_line CONTAINS "-encode"))
 | stats count() as hits, dc(process.name) as unique_tools, values(process.name) as tools, values(process.cmd_line) as commands by device.hostname, actor.user.name
 | where hits > 0

@@ -1,0 +1,36 @@
+---
+title: unsigned_kernel_driver_load
+description: Detects loading of unsigned or rarely seen kernel drivers which may indicate privilege escalation or rootkit installation.
+author: nano.rs
+severity: critical
+mode: live
+detection_mode: scheduled
+schedule: "*/2 * * * *"
+lookback: 5m
+folder: endpoint
+mitre_tactics:
+  - TA0004
+mitre_techniques:
+  - T1068
+tags:
+  - driver
+  - kernel
+  - rootkit
+  - windows
+ai_triage_hints:
+  ignore_when:
+    - "Driver is from known hardware vendor update"
+    - "Driver is signed by Microsoft or WHQL"
+  suspicious_when:
+    - "Driver has no digital signature"
+    - "Driver loaded from temp or user directory"
+---
+metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
+| where class_uid=1005 AND (metadata.event_code="6" OR module.file.path CONTAINS ".sys")
+| eval esc_driver_signature_not_valid=((lower(tostring(module.file.signatures.state)) CONTAINS "'valid'") = false)
+| prevalence enrich=true window=30d
+| where host_count < 10
+| eval esc_very_rare_driver=(host_count < 3)
+| eval esc_driver_from_suspicious_path=(lower(module.file.path) CONTAINS "temp" OR lower(module.file.path) CONTAINS "appdata" OR lower(module.file.path) CONTAINS "downloads")
+| risk score=min(100, 70 + if(esc_very_rare_driver, 20, 0) + if(esc_driver_signature_not_valid, 22, 0) + if(esc_driver_from_suspicious_path, 25, 0)) entity=device.hostname factor=concat("Rare kernel driver", if(esc_very_rare_driver, "; Very rare driver", ""), if(esc_driver_signature_not_valid, "; Driver signature not valid", ""), if(esc_driver_from_suspicious_path, "; Driver from suspicious path", ""))
+| table time, device.hostname, module.file.name, module.file.path, module.file.signatures.state, risk_score, risk_factors, esc_driver_signature_not_valid

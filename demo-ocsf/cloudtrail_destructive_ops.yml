@@ -28,6 +28,6 @@ ai_triage_hints:
     - "User has recent AccessDeniedException errors (enumeration then destruction)"
     - "No MFA used for the session"
 ---
-source_type="aws_cloudtrail" (api.operation CONTAINS "Delete" OR api.operation CONTAINS "Terminate")
-| stats count() as delete_count, values(api.operation) as operations, values(actor.user.name) as actors, min(timestamp) as first_seen, max(timestamp) as last_seen by src_endpoint.ip
+metadata.log_source="aws_cloudtrail" class_uid=6003 (api.operation CONTAINS "Delete" OR api.operation CONTAINS "Terminate")
+| stats count() as delete_count, values(api.operation) as operations, values(actor.user.name) as actors, min(time) as first_seen, max(time) as last_seen by src_endpoint.ip
 | where delete_count > 2
