@@ -28,7 +28,6 @@ class_uid=1007 activity_id=1
 | where process.cmd_line CONTAINS "screenshot" OR process.cmd_line CONTAINS "CopyFromScreen" OR process.cmd_line CONTAINS "BitBlt" OR process.cmd_line CONTAINS "[System.Windows.Forms.Screen]"
 | prevalence enrich=true window=30d
 | where host_count < 10
-| risk score=50 entity=device.hostname factor="Screen capture activity"
-| where host_count < 3
-| risk score=80 factor="Rare screenshot process"
+| eval esc_rare_screenshot_process=(host_count < 3)
+| risk score=min(100, 50 + if(esc_rare_screenshot_process, 30, 0)) entity=device.hostname factor=concat("Screen capture activity", if(esc_rare_screenshot_process, "; Rare screenshot process", ""))
 | table time, device.hostname, actor.user.name, process.name, process.file.hashes.value, host_count, risk_score, risk_factors

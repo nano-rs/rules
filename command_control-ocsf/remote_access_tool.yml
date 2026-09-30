@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1007
 | where process.name IN ("AnyDesk.exe", "TeamViewer.exe", "ScreenConnect.exe", "RemoteDesktop.exe", "ammyy.exe", "RustDesk.exe", "meshagent.exe") OR process.cmd_line CONTAINS "connectwise" OR process.cmd_line CONTAINS "splashtop"
-| risk score=50 entity=device.hostname factor="Remote access tool detected"
-| where process.file.path CONTAINS "Temp" OR process.file.path CONTAINS "AppData"
-| risk score=75 factor="RAT from suspicious path"
+| eval esc_rat_from_suspicious_path=(lower(process.file.path) CONTAINS "temp" OR lower(process.file.path) CONTAINS "appdata")
+| risk score=min(100, 50 + if(esc_rat_from_suspicious_path, 25, 0)) entity=device.hostname factor=concat("Remote access tool detected", if(esc_rat_from_suspicious_path, "; RAT from suspicious path", ""))
 | table time, device.hostname, actor.user.name, process.name, process.file.path, process.cmd_line, risk_score, risk_factors

@@ -29,7 +29,6 @@ class_uid=1007 activity_id=1
 | where process.name NOT IN ("teams.exe", "zoom.exe", "webex.exe", "slack.exe", "chrome.exe", "msedge.exe")
 | prevalence enrich=true window=30d
 | where host_count < 10
-| risk score=60 entity=device.hostname factor="Audio capture detected"
-| where host_count < 3
-| risk score=85 factor="Rare audio capture process"
+| eval esc_rare_audio_capture_process=(host_count < 3)
+| risk score=min(100, 60 + if(esc_rare_audio_capture_process, 25, 0)) entity=device.hostname factor=concat("Audio capture detected", if(esc_rare_audio_capture_process, "; Rare audio capture process", ""))
 | table time, device.hostname, actor.user.name, process.name, process.file.hashes.value, host_count, risk_score, risk_factors

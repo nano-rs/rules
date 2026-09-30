@@ -32,13 +32,10 @@ ai_triage_hints:
 ---
 source_type=proxy OR source_type=firewall OR source_type=dns
 | where dest_host != "" AND dest_host LIKE "%.%"
+| eval esc_possible_dga_domain=match(dest_host, "(?i)(^[a-z0-9]{12,}\.)|(\d{3,})")
 | prevalence enrich=true window=30d
 | where host_count < 10 AND prevalence_first_seen > now() - INTERVAL 24 HOUR
-| risk score=70 entity=src_host factor="Connection to newly seen domain"
-| where host_count < 5
-| risk score=80 factor="Very rare domain"
-| where host_count < 3
-| risk score=90 factor="Extremely rare domain"
-| where dest_host=/(^[a-z0-9]{12,}\.)|(\d{3,})/i
-| risk score=95 factor="Possible DGA domain"
-| table timestamp, src_host, src_ip, user, dest_host, dest_ip, dest_port, host_count, prevalence_first_seen, is_rare, url, risk_score, risk_factors
+| eval esc_very_rare_domain=(host_count < 5)
+| eval esc_extremely_rare_domain=(host_count < 3)
+| risk score=min(100, 70 + if(esc_very_rare_domain, 10, 0) + if(esc_extremely_rare_domain, 10, 0) + if(esc_possible_dga_domain, 25, 0)) entity=src_host factor=concat("Connection to newly seen domain", if(esc_very_rare_domain, "; Very rare domain", ""), if(esc_extremely_rare_domain, "; Extremely rare domain", ""), if(esc_possible_dga_domain, "; Possible DGA domain", ""))
+| table timestamp, src_host, src_ip, user, dest_host, dest_ip, dest_port, host_count, prevalence_first_seen, is_rare, url, risk_score, risk_factors, esc_possible_dga_domain

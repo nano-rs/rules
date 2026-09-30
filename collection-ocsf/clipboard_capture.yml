@@ -28,7 +28,6 @@ class_uid=1007 activity_id=1
 | where process.cmd_line CONTAINS "GetClipboardData" OR process.cmd_line CONTAINS "Get-Clipboard" OR process.cmd_line CONTAINS "clip.exe"
 | prevalence enrich=true window=30d
 | where host_count < 10
-| risk score=50 entity=device.hostname factor="Clipboard access"
-| where host_count < 3
-| risk score=75 factor="Rare clipboard accessor"
+| eval esc_rare_clipboard_accessor=(host_count < 3)
+| risk score=min(100, 50 + if(esc_rare_clipboard_accessor, 25, 0)) entity=device.hostname factor=concat("Clipboard access", if(esc_rare_clipboard_accessor, "; Rare clipboard accessor", ""))
 | table time, device.hostname, actor.user.name, process.name, process.file.hashes.value, host_count, risk_score, risk_factors
