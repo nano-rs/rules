@@ -30,7 +30,6 @@ class_uid=6003
 | where api.operation=/^List/i OR api.operation=/^Describe/i OR api.operation=/^Get/i
 | stats count, dc(api.operation) as unique_apis, min(time) as time by actor.user.name, src_endpoint.ip
 | where count > 50 AND unique_apis > 10
-| risk score=55 entity=actor.user.name factor="Cloud API enumeration"
-| where unique_apis > 30
-| risk score=75 factor="Extensive cloud recon"
+| eval esc_extensive_cloud_recon=(unique_apis > 30)
+| risk score=min(100, 55 + if(esc_extensive_cloud_recon, 20, 0)) entity=actor.user.name factor=concat("Cloud API enumeration", if(esc_extensive_cloud_recon, "; Extensive cloud recon", ""))
 | table time, actor.user.name, src_endpoint.ip, count, unique_apis, risk_score, risk_factors

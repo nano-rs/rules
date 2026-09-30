@@ -27,7 +27,6 @@ ai_triage_hints:
 ---
 class_uid=1007 activity_id=1
 | where process.cmd_line CONTAINS "SharpHound" OR process.cmd_line CONTAINS "bloodhound" OR process.cmd_line CONTAINS "Invoke-BloodHound" OR process.name="sharphound.exe"
-| risk score=85 entity=device.hostname factor="BloodHound/SharpHound detected"
-| where process.cmd_line CONTAINS "-CollectionMethod All"
-| risk score=95 factor="Full AD enumeration"
+| eval esc_full_ad_enumeration=(lower(process.cmd_line) CONTAINS "-collectionmethod all")
+| risk score=min(100, 85 + if(esc_full_ad_enumeration, 10, 0)) entity=device.hostname factor=concat("BloodHound/SharpHound detected", if(esc_full_ad_enumeration, "; Full AD enumeration", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

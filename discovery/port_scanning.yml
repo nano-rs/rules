@@ -28,9 +28,7 @@ source_type=firewall OR source_type=network_flow OR source_type=endpoint_edr
 | where event_type="network_connect"
 | stats count, dc(dest_ip) as unique_ips, dc(dest_port) as unique_ports, min(timestamp) as timestamp by src_ip
 | where (unique_ips > 20 AND unique_ports > 5) OR unique_ports > 50
-| risk score=60 entity=src_ip factor="Port scanning detected"
-| where unique_ips > 50
-| risk score=75 factor="Wide network scan"
-| where unique_ports > 100
-| risk score=85 factor="Extensive port enumeration"
+| eval esc_wide_network_scan=(unique_ips > 50)
+| eval esc_extensive_port_enumeration=(unique_ports > 100)
+| risk score=min(100, 60 + if(esc_wide_network_scan, 15, 0) + if(esc_extensive_port_enumeration, 25, 0)) entity=src_ip factor=concat("Port scanning detected", if(esc_wide_network_scan, "; Wide network scan", ""), if(esc_extensive_port_enumeration, "; Extensive port enumeration", ""))
 | table timestamp, src_ip, unique_ips, unique_ports, count, risk_score, risk_factors

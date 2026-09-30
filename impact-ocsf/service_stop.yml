@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007
 | where (process.name="sc.exe" AND process.cmd_line CONTAINS "stop") OR (process.name="net.exe" AND process.cmd_line CONTAINS "stop")
 | where process.cmd_line CONTAINS "sql" OR process.cmd_line CONTAINS "backup" OR process.cmd_line CONTAINS "vss" OR process.cmd_line CONTAINS "exchange" OR process.cmd_line CONTAINS "sophos" OR process.cmd_line CONTAINS "veeam"
-| risk score=70 entity=device.hostname factor="Critical service stopped"
-| where process.cmd_line CONTAINS "vss" OR process.cmd_line CONTAINS "backup"
-| risk score=85 factor="Backup service stopped"
+| eval esc_backup_service_stopped=(lower(process.cmd_line) CONTAINS "vss" OR lower(process.cmd_line) CONTAINS "backup")
+| risk score=min(100, 70 + if(esc_backup_service_stopped, 15, 0)) entity=device.hostname factor=concat("Critical service stopped", if(esc_backup_service_stopped, "; Backup service stopped", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

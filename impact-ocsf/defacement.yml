@@ -29,7 +29,6 @@ class_uid=1001
 | where file.path CONTAINS "wwwroot" OR file.path CONTAINS "htdocs" OR file.path CONTAINS "public_html" OR file.path CONTAINS "nginx/html"
 | where file.path CONTAINS "index.htm" OR file.path CONTAINS "default.asp" OR file.path CONTAINS "index.php"
 | where actor.process.name NOT IN ("w3wp.exe", "httpd", "nginx", "apache2", "java")
-| risk score=75 entity=device.hostname factor="Web content modified"
-| where actor.process.name IN ("cmd.exe", "powershell.exe", "bash")
-| risk score=90 factor="Shell modified web content"
+| eval esc_shell_modified_web_content=(lower(actor.process.name)="cmd.exe" OR lower(actor.process.name)="powershell.exe" OR lower(actor.process.name)="bash")
+| risk score=min(100, 75 + if(esc_shell_modified_web_content, 15, 0)) entity=device.hostname factor=concat("Web content modified", if(esc_shell_modified_web_content, "; Shell modified web content", ""))
 | table time, device.hostname, actor.user.name, actor.process.name, file.path, risk_score, risk_factors

@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=dns OR source_type=firewall
 | where dest_port=53
 | where dest_host!="" AND length(dest_host) > 60
-| risk score=70 entity=src_host factor="Long DNS query (possible tunneling)"
-| where dest_host=/^[a-z0-9]{30,}\./i
-| risk score=85 factor="High entropy DNS query"
+| eval esc_high_entropy_dns_query=match(dest_host, "(?i)^[a-z0-9]{30,}\.")
+| risk score=min(100, 70 + if(esc_high_entropy_dns_query, 15, 0)) entity=src_host factor=concat("Long DNS query (possible tunneling)", if(esc_high_entropy_dns_query, "; High entropy DNS query", ""))
 | table timestamp, src_host, src_ip, dest_host, risk_score, risk_factors

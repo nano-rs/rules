@@ -28,9 +28,7 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where process.name="mshta.exe"
 | where process.cmd_line CONTAINS "http" OR process.cmd_line CONTAINS "javascript:" OR process.cmd_line CONTAINS "vbscript:" OR process.cmd_line CONTAINS "Temp"
-| risk score=70 entity=device.hostname factor="Suspicious mshta execution"
-| where process.cmd_line CONTAINS "http://" OR process.cmd_line CONTAINS "https://"
-| risk score=85 factor="Remote HTA execution"
-| where actor.process.name IN ("winword.exe", "excel.exe", "outlook.exe")
-| risk score=95 factor="Office parent process"
-| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_remote_hta_execution=(lower(process.cmd_line) CONTAINS "http://" OR lower(process.cmd_line) CONTAINS "https://")
+| eval esc_office_parent_process=(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe")
+| risk score=min(100, 70 + if(esc_remote_hta_execution, 15, 0) + if(esc_office_parent_process, 25, 0)) entity=device.hostname factor=concat("Suspicious mshta execution", if(esc_remote_hta_execution, "; Remote HTA execution", ""), if(esc_office_parent_process, "; Office parent process", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.cmd_line, risk_score, risk_factors

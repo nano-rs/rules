@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where file_action="delete"
 | where file_path CONTAINS ".evtx" OR file_path CONTAINS ".log" OR file_path CONTAINS ".pcap" OR file_path CONTAINS "Prefetch"
-| risk score=70 entity=src_host factor="Forensic artifact deletion"
-| where process_name IN ("cmd.exe", "powershell.exe") AND command_line CONTAINS "del"
-| risk score=80 factor="Shell-based file deletion"
+| eval esc_shell_based_file_deletion=((lower(process_name)="cmd.exe" OR lower(process_name)="powershell.exe") AND lower(command_line) CONTAINS "del")
+| risk score=min(100, 70 + if(esc_shell_based_file_deletion, 10, 0)) entity=src_host factor=concat("Forensic artifact deletion", if(esc_shell_based_file_deletion, "; Shell-based file deletion", ""))
 | table timestamp, src_host, user, process_name, file_path, command_line, risk_score, risk_factors

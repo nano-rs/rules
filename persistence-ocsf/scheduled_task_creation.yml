@@ -30,13 +30,9 @@ ai_triage_hints:
 ---
 metadata.log_source="windows_sysmon" OR metadata.log_source="windows_security"
 | where metadata.event_code="4698" OR process.name="schtasks.exe"
-| risk score=45 entity=device.hostname factor="Scheduled task created"
-| where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR message CONTAINS "Temp" OR message CONTAINS "AppData"
-| risk score=70 factor="Suspicious execution path"
-| where process.cmd_line CONTAINS "-enc" OR message CONTAINS "-enc"
-| risk score=85 factor="Encoded command in task"
-| where actor.process.name IN ("wscript.exe", "cscript.exe", "mshta.exe")
-| risk score=80 factor="Script engine parent"
-| where actor.process.name IN ("winword.exe", "excel.exe", "powerpnt.exe")
-| risk score=90 factor="Office app parent"
-| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_suspicious_execution_path=(match(process.cmd_line, "(?i)temp|appdata|programdata") OR match(message, "(?i)temp|appdata|programdata"))
+| eval esc_encoded_command_in_task=(match(process.cmd_line, "(?i)-enc") OR match(message, "(?i)-enc"))
+| eval esc_script_engine_parent=(lower(actor.process.name)="wscript.exe" OR lower(actor.process.name)="cscript.exe" OR lower(actor.process.name)="mshta.exe")
+| eval esc_office_app_parent=(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="powerpnt.exe")
+| risk score=min(100, 45 + if(esc_suspicious_execution_path, 25, 0) + if(esc_encoded_command_in_task, 40, 0) + if(esc_script_engine_parent, 35, 0) + if(esc_office_app_parent, 45, 0)) entity=device.hostname factor=concat("Scheduled task created", if(esc_suspicious_execution_path, "; Suspicious execution path", ""), if(esc_encoded_command_in_task, "; Encoded command in task", ""), if(esc_script_engine_parent, "; Script engine parent", ""), if(esc_office_app_parent, "; Office app parent", ""))
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, risk_factors

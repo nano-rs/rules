@@ -29,7 +29,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="regsvr32.exe"
 | where command_line CONTAINS "scrobj" OR command_line CONTAINS "/i:http" OR command_line CONTAINS "/i:https"
-| risk score=80 entity=src_host factor="Regsvr32 scriptlet execution"
-| where command_line CONTAINS "http"
-| risk score=90 factor="Remote scriptlet"
+| eval esc_remote_scriptlet=(lower(command_line) CONTAINS "http")
+| risk score=min(100, 80 + if(esc_remote_scriptlet, 10, 0)) entity=src_host factor=concat("Regsvr32 scriptlet execution", if(esc_remote_scriptlet, "; Remote scriptlet", ""))
 | table timestamp, src_host, user, parent_process_name, command_line, risk_score, risk_factors

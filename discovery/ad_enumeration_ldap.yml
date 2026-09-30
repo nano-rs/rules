@@ -29,9 +29,7 @@ source_type=windows_security OR source_type=auth_logs
 | where event_type="ldap_query" OR event_type="directory_read"
 | stats count, min(timestamp) as timestamp by src_host, user
 | where count > 100
-| risk score=55 entity=src_host factor="High-volume LDAP queries"
-| where count > 500
-| risk score=75 factor="Excessive LDAP enumeration"
-| where count > 1000
-| risk score=90 factor="Likely AD enumeration tool"
+| eval esc_excessive_ldap_enumeration=(count > 500)
+| eval esc_likely_ad_enumeration_tool=(count > 1000)
+| risk score=min(100, 55 + if(esc_excessive_ldap_enumeration, 20, 0) + if(esc_likely_ad_enumeration_tool, 15, 0)) entity=src_host factor=concat("High-volume LDAP queries", if(esc_excessive_ldap_enumeration, "; Excessive LDAP enumeration", ""), if(esc_likely_ad_enumeration_tool, "; Likely AD enumeration tool", ""))
 | table timestamp, src_host, user, count, risk_score, risk_factors

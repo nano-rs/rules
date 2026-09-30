@@ -29,7 +29,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where file_path CONTAINS "wwwroot" OR file_path CONTAINS "htdocs" OR file_path CONTAINS "public_html" OR file_path CONTAINS "nginx/html"
 | where file_path CONTAINS "index.htm" OR file_path CONTAINS "default.asp" OR file_path CONTAINS "index.php"
 | where process_name NOT IN ("w3wp.exe", "httpd", "nginx", "apache2", "java")
-| risk score=75 entity=src_host factor="Web content modified"
-| where process_name IN ("cmd.exe", "powershell.exe", "bash")
-| risk score=90 factor="Shell modified web content"
+| eval esc_shell_modified_web_content=(lower(process_name)="cmd.exe" OR lower(process_name)="powershell.exe" OR lower(process_name)="bash")
+| risk score=min(100, 75 + if(esc_shell_modified_web_content, 15, 0)) entity=src_host factor=concat("Web content modified", if(esc_shell_modified_web_content, "; Shell modified web content", ""))
 | table timestamp, src_host, user, process_name, file_path, risk_score, risk_factors

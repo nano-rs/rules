@@ -27,7 +27,6 @@ ai_triage_hints:
 class_uid=1007
 | where metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where process.cmd_line CONTAINS "\\MSSE-" OR process.cmd_line CONTAINS "\\postex_" OR process.cmd_line CONTAINS "\\status_" OR process.cmd_line CONTAINS "\\msagent_" OR process.cmd_line CONTAINS "\\postex_ssh_"
-| risk score=90 entity=device.hostname factor="Cobalt Strike indicators"
-| where process.cmd_line CONTAINS "\\MSSE-" AND process.cmd_line CONTAINS "\\pipe\\"
-| risk score=95 factor="Default CS named pipe"
+| eval esc_default_cs_named_pipe=(lower(process.cmd_line) CONTAINS "\\msse-" AND lower(process.cmd_line) CONTAINS "\\pipe\\")
+| risk score=min(100, 90 + if(esc_default_cs_named_pipe, 5, 0)) entity=device.hostname factor=concat("Cobalt Strike indicators", if(esc_default_cs_named_pipe, "; Default CS named pipe", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

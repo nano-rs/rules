@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1007 activity_id=1
 | where process.name="attrib.exe" AND process.cmd_line CONTAINS "+h"
-| risk score=40 entity=device.hostname factor="Hidden file/directory created"
-| where process.cmd_line CONTAINS ".exe" OR process.cmd_line CONTAINS ".dll" OR process.cmd_line CONTAINS ".ps1"
-| risk score=70 factor="Hidden executable"
+| eval esc_hidden_executable=(lower(process.cmd_line) CONTAINS ".exe" OR lower(process.cmd_line) CONTAINS ".dll" OR lower(process.cmd_line) CONTAINS ".ps1")
+| risk score=min(100, 40 + if(esc_hidden_executable, 30, 0)) entity=device.hostname factor=concat("Hidden file/directory created", if(esc_hidden_executable, "; Hidden executable", ""))
 | table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

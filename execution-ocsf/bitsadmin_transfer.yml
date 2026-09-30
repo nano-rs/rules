@@ -32,7 +32,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where process.name="bitsadmin.exe"
 | where process.cmd_line CONTAINS "/transfer" OR process.cmd_line CONTAINS "/create"
 | where process.cmd_line CONTAINS "http"
-| risk score=65 entity=device.hostname factor="BITSAdmin file transfer"
-| where process.cmd_line CONTAINS ".exe" OR process.cmd_line CONTAINS ".dll"
-| risk score=80 factor="Executable transfer"
-| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_executable_transfer=(lower(process.cmd_line) CONTAINS ".exe" OR lower(process.cmd_line) CONTAINS ".dll")
+| risk score=min(100, 65 + if(esc_executable_transfer, 15, 0)) entity=device.hostname factor=concat("BITSAdmin file transfer", if(esc_executable_transfer, "; Executable transfer", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

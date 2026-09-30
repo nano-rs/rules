@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where (process_name="fodhelper.exe" OR process_name="computerdefaults.exe" OR process_name="sdclt.exe" OR process_name="eventvwr.exe")
 | where parent_process_name NOT IN ("explorer.exe", "svchost.exe")
-| risk score=80 entity=src_host factor="Potential UAC bypass"
-| where parent_process_name IN ("cmd.exe", "powershell.exe", "pwsh.exe")
-| risk score=90 factor="Shell-initiated UAC bypass"
+| eval esc_shell_initiated_uac_bypass=(lower(parent_process_name)="cmd.exe" OR lower(parent_process_name)="powershell.exe" OR lower(parent_process_name)="pwsh.exe")
+| risk score=min(100, 80 + if(esc_shell_initiated_uac_bypass, 10, 0)) entity=src_host factor=concat("Potential UAC bypass", if(esc_shell_initiated_uac_bypass, "; Shell-initiated UAC bypass", ""))
 | table timestamp, src_host, user, process_name, parent_process_name, command_line, risk_score, risk_factors

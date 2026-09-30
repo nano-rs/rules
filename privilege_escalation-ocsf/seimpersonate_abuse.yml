@@ -28,7 +28,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where actor.process.name IN ("w3wp.exe", "sqlservr.exe", "mssql.exe", "tomcat.exe")
 | where process.name IN ("cmd.exe", "powershell.exe", "whoami.exe", "net.exe")
-| risk score=80 entity=device.hostname factor="Service account spawning shell"
-| where actor.user.name CONTAINS "SYSTEM" OR actor.user.name CONTAINS "NT AUTHORITY" OR actor.user.domain CONTAINS "NT AUTHORITY"
-| risk score=95 factor="SYSTEM shell from service"
-| table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_system_shell_from_service=(lower(actor.user.name) CONTAINS "system" OR lower(actor.user.name) CONTAINS "nt authority" OR lower(actor.user.domain) CONTAINS "nt authority")
+| risk score=min(100, 80 + if(esc_system_shell_from_service, 15, 0)) entity=device.hostname factor=concat("Service account spawning shell", if(esc_system_shell_from_service, "; SYSTEM shell from service", ""))
+| table time, device.hostname, actor.user.name, actor.process.name, process.name, process.cmd_line, risk_score, risk_factors

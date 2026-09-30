@@ -35,9 +35,7 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where NOT is_private_ip(dest_ip)
 | prevalence enrich=true window=30d
 | where host_count < 10
-| risk score=50 entity=src_host factor="Rare process with network"
-| where host_count < 5
-| risk score=75 factor="Very rare hash"
-| where dest_port NOT IN (80, 443, 53)
-| risk score=85 factor="Non-standard port"
+| eval esc_very_rare_hash=(host_count < 5)
+| eval esc_non_standard_port=(dest_port!=80 AND dest_port!=443 AND dest_port!=53)
+| risk score=min(100, 50 + if(esc_very_rare_hash, 25, 0) + if(esc_non_standard_port, 35, 0)) entity=src_host factor=concat("Rare process with network", if(esc_very_rare_hash, "; Very rare hash", ""), if(esc_non_standard_port, "; Non-standard port", ""))
 | table timestamp, src_host, process_name, process_path, process_hash, dest_ip, dest_port, host_count, is_rare, risk_score, risk_factors

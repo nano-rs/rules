@@ -30,7 +30,6 @@ source_type=firewall OR source_type=proxy OR source_type=network_flow
 | where count > 20 AND unique_times > 15
 | prevalence enrich=true window=30d
 | where host_count < 5
-| risk score=70 entity=src_host factor="Regular beacon pattern"
-| where host_count < 2
-| risk score=85 factor="Unique destination with beaconing"
+| eval esc_unique_destination_with_beaconing=(host_count < 2)
+| risk score=min(100, 70 + if(esc_unique_destination_with_beaconing, 15, 0)) entity=src_host factor=concat("Regular beacon pattern", if(esc_unique_destination_with_beaconing, "; Unique destination with beaconing", ""))
 | table timestamp, src_host, dest_ip, dest_port, count, unique_times, host_count, risk_score, risk_factors

@@ -29,10 +29,8 @@ source_type=firewall OR source_type=network_flow
 | where protocol="tls" OR protocol="ssl"
 | where dest_port NOT IN (443, 8443, 993, 995, 636, 989, 990)
 | where NOT is_private_ip(dest_ip)
-| risk score=50 entity=src_host factor="TLS on non-standard port"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=70 factor="Rare TLS destination"
-| where host_count < 2
-| risk score=85 factor="Unique encrypted channel"
+| eval esc_rare_tls_destination=(host_count < 5)
+| eval esc_unique_encrypted_channel=(host_count < 2)
+| risk score=min(100, 50 + if(esc_rare_tls_destination, 20, 0) + if(esc_unique_encrypted_channel, 15, 0)) entity=src_host factor=concat("TLS on non-standard port", if(esc_rare_tls_destination, "; Rare TLS destination", ""), if(esc_unique_encrypted_channel, "; Unique encrypted channel", ""))
 | table timestamp, src_host, src_ip, dest_ip, dest_port, host_count, risk_score, risk_factors

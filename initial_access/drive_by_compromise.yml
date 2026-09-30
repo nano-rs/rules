@@ -28,7 +28,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where parent_process_name IN ("chrome.exe", "firefox.exe", "msedge.exe", "iexplore.exe", "brave.exe")
 | where process_name IN ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe", "rundll32.exe", "regsvr32.exe", "mshta.exe")
-| risk score=85 entity=src_host factor="Browser spawned shell"
-| where process_name="powershell.exe" AND command_line CONTAINS "-enc"
-| risk score=95 factor="Browser spawned encoded PowerShell"
+| eval esc_browser_spawned_encoded_powershell=(lower(process_name)="powershell.exe" AND lower(command_line) CONTAINS "-enc")
+| risk score=min(100, 85 + if(esc_browser_spawned_encoded_powershell, 10, 0)) entity=src_host factor=concat("Browser spawned shell", if(esc_browser_spawned_encoded_powershell, "; Browser spawned encoded PowerShell", ""))
 | table timestamp, src_host, user, parent_process_name, process_name, command_line, risk_score, risk_factors

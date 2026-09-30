@@ -28,9 +28,7 @@ class_uid=4002
 | where traffic.bytes_out > 10000000
 | where http_request.url.url_string CONTAINS "dropbox.com" OR http_request.url.url_string CONTAINS "drive.google.com" OR http_request.url.url_string CONTAINS "mega.nz" OR http_request.url.url_string CONTAINS "mediafire.com" OR http_request.url.url_string CONTAINS "sendspace.com" OR http_request.url.url_string CONTAINS "wetransfer.com" OR http_request.url.url_string CONTAINS "file.io"
 | eval bytes_out_mb = round(traffic.bytes_out / 1000000, 2)
-| risk score=55 entity=src_endpoint.hostname factor="Large cloud storage upload"
-| where traffic.bytes_out > 50000000
-| risk score=70 factor="Very large upload (>50MB)"
-| where traffic.bytes_out > 200000000
-| risk score=85 factor="Massive upload (>200MB)"
+| eval esc_very_large_upload_50mb=(traffic.bytes_out > 50000000)
+| eval esc_massive_upload_200mb=(traffic.bytes_out > 200000000)
+| risk score=min(100, 55 + if(esc_very_large_upload_50mb, 15, 0) + if(esc_massive_upload_200mb, 15, 0)) entity=src_endpoint.hostname factor=concat("Large cloud storage upload", if(esc_very_large_upload_50mb, "; Very large upload (>50MB)", ""), if(esc_massive_upload_200mb, "; Massive upload (>200MB)", ""))
 | table time, src_endpoint.hostname, src_endpoint.ip, actor.user.name, http_request.url.url_string, bytes_out_mb, risk_score, risk_factors

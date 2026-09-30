@@ -28,7 +28,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where actor.process.name="services.exe"
 | where process.name IN ("cmd.exe", "powershell.exe", "pwsh.exe")
-| risk score=70 entity=device.hostname factor="Shell via services"
-| where process.cmd_line CONTAINS "-enc" OR process.cmd_line CONTAINS "downloadstring" OR process.cmd_line CONTAINS "IEX"
-| risk score=90 factor="Suspicious shell command"
-| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_suspicious_shell_command=(lower(process.cmd_line) CONTAINS "-enc" OR lower(process.cmd_line) CONTAINS "downloadstring" OR lower(process.cmd_line) CONTAINS "iex")
+| risk score=min(100, 70 + if(esc_suspicious_shell_command, 20, 0)) entity=device.hostname factor=concat("Shell via services", if(esc_suspicious_shell_command, "; Suspicious shell command", ""))
+| table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

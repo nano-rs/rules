@@ -30,7 +30,6 @@ metadata.log_source="windows_sysmon"
 | where class_uid=201001 OR class_uid=201002
 | where reg_key.path CONTAINS "Image File Execution Options" OR reg_value.path CONTAINS "Image File Execution Options"
 | where reg_key.path CONTAINS "Debugger" OR reg_value.name="Debugger" OR reg_value.path CONTAINS "Debugger"
-| risk score=75 entity=device.hostname factor="IFEO debugger set"
-| where reg_key.path CONTAINS "sethc.exe" OR reg_key.path CONTAINS "utilman.exe" OR reg_key.path CONTAINS "osk.exe" OR reg_key.path CONTAINS "narrator.exe" OR reg_value.path CONTAINS "sethc.exe" OR reg_value.path CONTAINS "utilman.exe" OR reg_value.path CONTAINS "osk.exe" OR reg_value.path CONTAINS "narrator.exe"
-| risk score=95 factor="Accessibility tool hijack"
-| table time, device.hostname, actor.user.name, reg_key.path, reg_value.path, reg_value.name, reg_value.data, actor.process.name, risk_score, unmapped.risk_factors
+| eval esc_accessibility_tool_hijack=(lower(reg_key.path) CONTAINS "sethc.exe" OR lower(reg_key.path) CONTAINS "utilman.exe" OR lower(reg_key.path) CONTAINS "osk.exe" OR lower(reg_key.path) CONTAINS "narrator.exe" OR lower(reg_value.path) CONTAINS "sethc.exe" OR lower(reg_value.path) CONTAINS "utilman.exe" OR lower(reg_value.path) CONTAINS "osk.exe" OR lower(reg_value.path) CONTAINS "narrator.exe")
+| risk score=min(100, 75 + if(esc_accessibility_tool_hijack, 20, 0)) entity=device.hostname factor=concat("IFEO debugger set", if(esc_accessibility_tool_hijack, "; Accessibility tool hijack", ""))
+| table time, device.hostname, actor.user.name, reg_key.path, reg_value.path, reg_value.name, reg_value.data, actor.process.name, risk_score, risk_factors

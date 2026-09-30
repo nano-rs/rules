@@ -27,9 +27,7 @@ ai_triage_hints:
 source_type=email_gateway OR source_type=endpoint_edr
 | where event_type="email_received" OR event_type="file_open"
 | where file_path=/(\.docm|\.xlsm|\.pptm|\.xll|\.iso|\.img|\.vhd|\.one|\.url|\.lnk)$/i
-| risk score=55 entity=user factor="Suspicious attachment type"
-| where file_path=/(\.iso|\.img|\.vhd)$/i
-| risk score=75 factor="Container file attachment"
-| where file_path CONTAINS ".xll"
-| risk score=80 factor="Excel add-in attachment"
+| eval esc_container_file_attachment=match(file_path, "(?i)(\.iso|\.img|\.vhd)$")
+| eval esc_excel_add_in_attachment=(lower(file_path) CONTAINS ".xll")
+| risk score=min(100, 55 + if(esc_container_file_attachment, 20, 0) + if(esc_excel_add_in_attachment, 25, 0)) entity=user factor=concat("Suspicious attachment type", if(esc_container_file_attachment, "; Container file attachment", ""), if(esc_excel_add_in_attachment, "; Excel add-in attachment", ""))
 | table timestamp, user, src_host, sender, subject, file_path, risk_score, risk_factors

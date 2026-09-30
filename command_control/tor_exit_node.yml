@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 source_type=proxy OR source_type=firewall
 | where dest_port=9001 OR dest_port=9030 OR url CONTAINS ".onion" OR dest_host CONTAINS "torproject.org"
-| risk score=75 entity=src_host factor="Tor network connection"
-| where src_host CONTAINS "srv" OR src_host CONTAINS "server"
-| risk score=90 factor="Server connecting to Tor"
+| eval esc_server_connecting_to_tor=(lower(src_host) CONTAINS "srv" OR lower(src_host) CONTAINS "server")
+| risk score=min(100, 75 + if(esc_server_connecting_to_tor, 15, 0)) entity=src_host factor=concat("Tor network connection", if(esc_server_connecting_to_tor, "; Server connecting to Tor", ""))
 | table timestamp, src_host, src_ip, user, dest_ip, dest_port, dest_host, risk_score, risk_factors

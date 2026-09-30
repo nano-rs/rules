@@ -25,7 +25,6 @@ ai_triage_hints:
 ---
 class_uid=1007
 | where process.cmd_line CONTAINS "nc -e" OR process.cmd_line CONTAINS "ncat -e" OR process.cmd_line CONTAINS "/dev/tcp/" OR process.cmd_line CONTAINS "bash -i" OR process.cmd_line CONTAINS "mkfifo" OR process.cmd_line CONTAINS "socket" AND process.cmd_line CONTAINS "subprocess"
-| risk score=90 entity=device.hostname factor="Reverse shell detected"
-| where process.cmd_line CONTAINS "/dev/tcp/"
-| risk score=95 factor="Bash reverse shell"
+| eval esc_bash_reverse_shell=(lower(process.cmd_line) CONTAINS "/dev/tcp/")
+| risk score=min(100, 90 + if(esc_bash_reverse_shell, 5, 0)) entity=device.hostname factor=concat("Reverse shell detected", if(esc_bash_reverse_shell, "; Bash reverse shell", ""))
 | table time, device.hostname, actor.user.name, process.name, process.cmd_line, risk_score, risk_factors

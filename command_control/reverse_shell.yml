@@ -26,7 +26,6 @@ ai_triage_hints:
 source_type=endpoint_edr OR source_type=windows_sysmon OR source_type=linux_audit
 | where event_type="process_create"
 | where command_line CONTAINS "nc -e" OR command_line CONTAINS "ncat -e" OR command_line CONTAINS "/dev/tcp/" OR command_line CONTAINS "bash -i" OR command_line CONTAINS "mkfifo" OR command_line CONTAINS "socket" AND command_line CONTAINS "subprocess"
-| risk score=90 entity=src_host factor="Reverse shell detected"
-| where command_line CONTAINS "/dev/tcp/"
-| risk score=95 factor="Bash reverse shell"
+| eval esc_bash_reverse_shell=(lower(command_line) CONTAINS "/dev/tcp/")
+| risk score=min(100, 90 + if(esc_bash_reverse_shell, 5, 0)) entity=src_host factor=concat("Reverse shell detected", if(esc_bash_reverse_shell, "; Bash reverse shell", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

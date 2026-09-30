@@ -28,8 +28,7 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_access"
 | where command_line CONTAINS "CreateRemoteThread" OR command_line CONTAINS "VirtualAllocEx" OR command_line CONTAINS "WriteProcessMemory" OR command_line CONTAINS "NtMapViewOfSection"
-| risk score=75 entity=src_host factor="Process injection detected"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=90 factor="Rare injector process"
+| eval esc_rare_injector_process=(host_count < 5)
+| risk score=min(100, 75 + if(esc_rare_injector_process, 15, 0)) entity=src_host factor=concat("Process injection detected", if(esc_rare_injector_process, "; Rare injector process", ""))
 | table timestamp, src_host, process_name, process_hash, command_line, host_count, risk_score, risk_factors

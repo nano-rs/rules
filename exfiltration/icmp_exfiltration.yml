@@ -29,7 +29,6 @@ source_type=firewall OR source_type=network_flow
 | where NOT is_private_ip(dest_ip)
 | stats count, sum(bytes_out) as total_bytes, min(timestamp) as timestamp by src_ip, dest_ip
 | where count > 100 OR total_bytes > 1000000
-| risk score=60 entity=src_ip factor="Excessive ICMP traffic"
-| where total_bytes > 10000000
-| risk score=80 factor="Large ICMP data transfer"
+| eval esc_large_icmp_data_transfer=(total_bytes > 10000000)
+| risk score=min(100, 60 + if(esc_large_icmp_data_transfer, 20, 0)) entity=src_ip factor=concat("Excessive ICMP traffic", if(esc_large_icmp_data_transfer, "; Large ICMP data transfer", ""))
 | table timestamp, src_ip, dest_ip, count, total_bytes, risk_score, risk_factors

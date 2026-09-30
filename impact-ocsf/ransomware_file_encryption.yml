@@ -29,7 +29,6 @@ class_uid=1001
 | where file.path=/(\.encrypted|\.locked|\.crypto|\.crypt|\.enc|\.pay|\.ransom)$/i
 | stats count, min(time) as time, values(actor.user.name) as user by device.hostname, actor.process.name
 | where count > 10
-| risk score=95 entity=device.hostname factor="Ransomware encryption pattern"
-| where count > 100
-| risk score=99 factor="Active ransomware encryption"
+| eval esc_active_ransomware_encryption=(count > 100)
+| risk score=min(100, 95 + if(esc_active_ransomware_encryption, 4, 0)) entity=device.hostname factor=concat("Ransomware encryption pattern", if(esc_active_ransomware_encryption, "; Active ransomware encryption", ""))
 | table time, device.hostname, user, actor.process.name, count, risk_score, risk_factors

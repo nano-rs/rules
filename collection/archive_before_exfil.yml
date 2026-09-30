@@ -28,7 +28,6 @@ source_type=endpoint_edr OR source_type=windows_sysmon
 | where event_type="process_create"
 | where process_name IN ("7z.exe", "7za.exe", "rar.exe", "zip.exe") OR (process_name="powershell.exe" AND command_line CONTAINS "Compress-Archive")
 | where command_line CONTAINS "Documents" OR command_line CONTAINS "Desktop" OR command_line CONTAINS "Finance" OR command_line CONTAINS "HR" OR command_line CONTAINS "Confidential"
-| risk score=60 entity=src_host factor="Suspicious data archiving"
-| where command_line CONTAINS "-p" OR command_line CONTAINS "-password"
-| risk score=80 factor="Password-protected archive"
+| eval esc_password_protected_archive=(lower(command_line) CONTAINS "-p" OR lower(command_line) CONTAINS "-password")
+| risk score=min(100, 60 + if(esc_password_protected_archive, 20, 0)) entity=src_host factor=concat("Suspicious data archiving", if(esc_password_protected_archive, "; Password-protected archive", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

@@ -28,7 +28,6 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where (process_name="reg.exe" AND command_line CONTAINS "save" AND (command_line CONTAINS "sam" OR command_line CONTAINS "system" OR command_line CONTAINS "security"))
-| risk score=80 entity=src_host factor="Registry hive dump"
-| where command_line CONTAINS "sam" AND command_line CONTAINS "system"
-| risk score=95 factor="SAM+SYSTEM dump"
+| eval esc_sam_system_dump=(lower(command_line) CONTAINS "sam" AND lower(command_line) CONTAINS "system")
+| risk score=min(100, 80 + if(esc_sam_system_dump, 15, 0)) entity=src_host factor=concat("Registry hive dump", if(esc_sam_system_dump, "; SAM+SYSTEM dump", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

@@ -28,7 +28,6 @@ class_uid=4001 dst_endpoint.port=3389
 | where is_private_ip(src_endpoint.ip) AND is_private_ip(dst_endpoint.ip)
 | prevalence enrich=true window=30d
 | where host_count < 5
-| risk score=55 entity=src_endpoint.ip factor="Uncommon internal RDP"
-| where host_count < 2
-| risk score=75 factor="First-seen RDP connection"
+| eval esc_first_seen_rdp_connection=(host_count < 2)
+| risk score=min(100, 55 + if(esc_first_seen_rdp_connection, 20, 0)) entity=src_endpoint.ip factor=concat("Uncommon internal RDP", if(esc_first_seen_rdp_connection, "; First-seen RDP connection", ""))
 | table time, src_endpoint.ip, src_endpoint.hostname, actor.user.name, dst_endpoint.ip, dst_endpoint.hostname, host_count, risk_score, risk_factors

@@ -36,9 +36,7 @@ class_uid=3002 activity_id=1 status="Success"
     [dst_endpoint.hostname=/^ws/i OR dst_endpoint.hostname=/^wks/i OR dst_endpoint.hostname=/^workstation/i OR dst_endpoint.hostname=/^desktop/i OR dst_endpoint.hostname=/^laptop/i OR dst_endpoint.hostname=/^lt/i]
     [dst_endpoint.hostname=/^srv/i OR dst_endpoint.hostname=/^server/i OR dst_endpoint.hostname=/^app/i OR dst_endpoint.hostname=/^web/i OR dst_endpoint.hostname=/^db/i]
     [dst_endpoint.hostname=/^dc/i OR dst_endpoint.hostname=/^domain/i OR dst_endpoint.hostname=/^ad/i OR dst_endpoint.hostname=/^pdc/i OR dst_endpoint.hostname=/^bdc/i]
-| risk score=80 entity=user.name factor="Workstation to DC progression"
-| where sequence_duration_seconds < 300
-| risk score=90 factor="Rapid lateral movement"
-| where step3_auth_protocol = "NTLM"
-| risk score=95 factor="NTLM authentication"
+| eval esc_rapid_lateral_movement=(sequence_duration_seconds < 300)
+| eval esc_ntlm_authentication=(lower(step3_auth_protocol)="ntlm")
+| risk score=min(100, 80 + if(esc_rapid_lateral_movement, 10, 0) + if(esc_ntlm_authentication, 15, 0)) entity=user.name factor=concat("Workstation to DC progression", if(esc_rapid_lateral_movement, "; Rapid lateral movement", ""), if(esc_ntlm_authentication, "; NTLM authentication", ""))
 | table user.name, step1_src_endpoint_ip, step1_dst_endpoint_hostname, step2_dst_endpoint_hostname, step3_dst_endpoint_hostname, step3_auth_protocol, sequence_duration_seconds, risk_score, risk_factors

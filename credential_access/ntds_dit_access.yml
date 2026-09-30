@@ -27,7 +27,6 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where (command_line CONTAINS "ntds.dit") OR (process_name="ntdsutil.exe" AND command_line CONTAINS "ifm") OR (command_line CONTAINS "vssadmin" AND command_line CONTAINS "create shadow")
-| risk score=90 entity=src_host factor="NTDS.dit access"
-| where process_name="ntdsutil.exe" AND command_line CONTAINS "create full"
-| risk score=95 factor="NTDS.dit IFM creation"
+| eval esc_ntds_dit_ifm_creation=(lower(process_name)="ntdsutil.exe" AND lower(command_line) CONTAINS "create full")
+| risk score=min(100, 90 + if(esc_ntds_dit_ifm_creation, 5, 0)) entity=src_host factor=concat("NTDS.dit access", if(esc_ntds_dit_ifm_creation, "; NTDS.dit IFM creation", ""))
 | table timestamp, src_host, user, process_name, command_line, risk_score, risk_factors

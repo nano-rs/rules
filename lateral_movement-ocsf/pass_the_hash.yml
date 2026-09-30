@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=3002 activity_id=1 auth_protocol="NTLM" status="Success"
 | where user.name CONTAINS "admin" OR user.name CONTAINS "svc"
-| risk score=60 entity=user.name factor="NTLM auth for privileged account"
-| where src_endpoint.hostname CONTAINS "ws" OR src_endpoint.hostname CONTAINS "desktop"
-| risk score=80 factor="Admin NTLM from workstation"
+| eval esc_admin_ntlm_from_workstation=(lower(src_endpoint.hostname) CONTAINS "ws" OR lower(src_endpoint.hostname) CONTAINS "desktop")
+| risk score=min(100, 60 + if(esc_admin_ntlm_from_workstation, 20, 0)) entity=user.name factor=concat("NTLM auth for privileged account", if(esc_admin_ntlm_from_workstation, "; Admin NTLM from workstation", ""))
 | table time, user.name, src_endpoint.ip, src_endpoint.hostname, dst_endpoint.hostname, auth_protocol, logon_type, risk_score, risk_factors

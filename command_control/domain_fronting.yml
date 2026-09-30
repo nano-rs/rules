@@ -30,8 +30,7 @@ source_type=proxy OR source_type=firewall
 | eval url_host = extract_domain(url)
 | eval url_host_matches_dest = (url_host = dest_host)
 | where url_host_matches_dest = false
-| risk score=70 entity=src_host factor="Potential domain fronting"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=85 factor="Rare fronted destination"
+| eval esc_rare_fronted_destination=(host_count < 5)
+| risk score=min(100, 70 + if(esc_rare_fronted_destination, 15, 0)) entity=src_host factor=concat("Potential domain fronting", if(esc_rare_fronted_destination, "; Rare fronted destination", ""))
 | table timestamp, src_host, src_ip, dest_host, url, host_count, risk_score, risk_factors

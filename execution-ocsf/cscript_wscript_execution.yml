@@ -30,9 +30,7 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where class_uid=1007 AND activity_id=1
 | where process.name IN ("cscript.exe", "wscript.exe")
 | where process.cmd_line CONTAINS "Temp" OR process.cmd_line CONTAINS "AppData" OR process.cmd_line CONTAINS "Downloads"
-| risk score=55 entity=device.hostname factor="Script from suspicious path"
-| where actor.process.name IN ("winword.exe", "excel.exe", "outlook.exe", "powerpnt.exe")
-| risk score=85 factor="Office parent process"
-| where process.cmd_line CONTAINS "//E:jscript" OR process.cmd_line CONTAINS "//E:vbscript"
-| risk score=70 factor="Explicit script engine"
-| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_office_parent_process=(lower(actor.process.name)="winword.exe" OR lower(actor.process.name)="excel.exe" OR lower(actor.process.name)="outlook.exe" OR lower(actor.process.name)="powerpnt.exe")
+| eval esc_explicit_script_engine=match(process.cmd_line, "(?i)//e:(jscript|vbscript)")
+| risk score=min(100, 55 + if(esc_office_parent_process, 30, 0) + if(esc_explicit_script_engine, 15, 0)) entity=device.hostname factor=concat("Script from suspicious path", if(esc_office_parent_process, "; Office parent process", ""), if(esc_explicit_script_engine, "; Explicit script engine", ""))
+| table time, device.hostname, actor.user.name, process.name, actor.process.name, process.cmd_line, risk_score, risk_factors

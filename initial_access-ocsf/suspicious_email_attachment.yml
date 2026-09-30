@@ -26,9 +26,7 @@ ai_triage_hints:
 ---
 metadata.log_source IN ("email_gateway", "endpoint_edr", "windows_sysmon") (class_uid=4009 OR (class_uid=1001 activity_id=14))
 | where file.path=/(\.docm|\.xlsm|\.pptm|\.xll|\.iso|\.img|\.vhd|\.one|\.url|\.lnk)$/i
-| risk score=55 entity=user.name factor="Suspicious attachment type"
-| where file.path=/(\.iso|\.img|\.vhd)$/i
-| risk score=75 factor="Container file attachment"
-| where file.path CONTAINS ".xll"
-| risk score=80 factor="Excel add-in attachment"
+| eval esc_container_file_attachment=match(file.path, "(?i)(\.iso|\.img|\.vhd)$")
+| eval esc_excel_add_in_attachment=(lower(file.path) CONTAINS ".xll")
+| risk score=min(100, 55 + if(esc_container_file_attachment, 20, 0) + if(esc_excel_add_in_attachment, 25, 0)) entity=user.name factor=concat("Suspicious attachment type", if(esc_container_file_attachment, "; Container file attachment", ""), if(esc_excel_add_in_attachment, "; Excel add-in attachment", ""))
 | table time, user.name, device.hostname, email.from, email.subject, file.path, risk_score, risk_factors

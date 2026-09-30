@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name="InstallUtil.exe"
 | where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData" OR command_line CONTAINS "/U" OR command_line CONTAINS "/LogFile="
-| risk score=75 entity=src_host factor="Suspicious InstallUtil execution"
-| where command_line CONTAINS "/U"
-| risk score=85 factor="Uninstall parameter abuse"
+| eval esc_uninstall_parameter_abuse=(lower(command_line) CONTAINS "/u")
+| risk score=min(100, 75 + if(esc_uninstall_parameter_abuse, 10, 0)) entity=src_host factor=concat("Suspicious InstallUtil execution", if(esc_uninstall_parameter_abuse, "; Uninstall parameter abuse", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

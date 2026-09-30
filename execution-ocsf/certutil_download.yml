@@ -32,7 +32,6 @@ metadata.log_source="windows_sysmon" OR metadata.log_source="endpoint_edr"
 | where process.name="certutil.exe"
 | where process.cmd_line CONTAINS "-urlcache" OR process.cmd_line CONTAINS "-verifyctl" OR process.cmd_line CONTAINS "url"
 | where process.cmd_line CONTAINS "http"
-| risk score=80 entity=device.hostname factor="Certutil file download"
-| where process.cmd_line CONTAINS ".exe" OR process.cmd_line CONTAINS ".dll" OR process.cmd_line CONTAINS ".ps1"
-| risk score=90 factor="Executable download"
-| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, unmapped.risk_factors
+| eval esc_executable_download=(lower(process.cmd_line) CONTAINS ".exe" OR lower(process.cmd_line) CONTAINS ".dll" OR lower(process.cmd_line) CONTAINS ".ps1")
+| risk score=min(100, 80 + if(esc_executable_download, 10, 0)) entity=device.hostname factor=concat("Certutil file download", if(esc_executable_download, "; Executable download", ""))
+| table time, device.hostname, actor.user.name, process.cmd_line, risk_score, risk_factors

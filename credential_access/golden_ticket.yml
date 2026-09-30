@@ -26,7 +26,6 @@ ai_triage_hints:
 source_type=windows_security
 | where event_type="ticket_grant" AND auth_type="tgt"
 | where message CONTAINS "0x17" OR message CONTAINS "RC4" OR message CONTAINS "anomal"
-| risk score=90 entity=user factor="Potential Golden Ticket"
-| where src_host NOT CONTAINS "dc"
-| risk score=95 factor="TGT from non-DC"
+| eval esc_tgt_from_non_dc=((lower(src_host) CONTAINS "dc") = false)
+| risk score=min(100, 90 + if(esc_tgt_from_non_dc, 5, 0)) entity=user factor=concat("Potential Golden Ticket", if(esc_tgt_from_non_dc, "; TGT from non-DC", ""))
 | table timestamp, user, src_ip, src_host, dest_host, risk_score, risk_factors

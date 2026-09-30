@@ -28,7 +28,6 @@ source_type=windows_security OR source_type=auth_logs
 | where event_type="ticket_request" AND auth_type="as" AND pre_auth_type="0"
 | where enc_type="0x17" OR message CONTAINS "0x17" OR message CONTAINS "RC4"
 | stats count, dc(user) as unique_targets, min(timestamp) as timestamp by src_ip, src_host
-| risk score=75 entity=src_host factor="AS-REP requested with pre-auth disabled (RC4)"
-| where unique_targets > 3
-| risk score=90 factor="Likely AS-REP Roasting across multiple accounts"
+| eval esc_likely_as_rep_roasting_across_multiple=(unique_targets > 3)
+| risk score=min(100, 75 + if(esc_likely_as_rep_roasting_across_multiple, 15, 0)) entity=src_host factor=concat("AS-REP requested with pre-auth disabled (RC4)", if(esc_likely_as_rep_roasting_across_multiple, "; Likely AS-REP Roasting across multiple accounts", ""))
 | table timestamp, src_ip, src_host, user, count, unique_targets, risk_score, risk_factors

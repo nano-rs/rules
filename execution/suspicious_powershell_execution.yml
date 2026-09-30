@@ -35,13 +35,9 @@ source_type=windows_sysmon OR source_type=windows_security OR source_type=endpoi
 | where event_type="process_create"
 | where process_name="powershell.exe" OR process_name="pwsh.exe"
 | where command_line=/-e(nc(odedcommand)?)?\s/i OR command_line CONTAINS "IEX" OR command_line CONTAINS "Invoke-Expression" OR command_line CONTAINS "downloadstring"
-| risk score=50 entity=src_host factor="Suspicious PowerShell"
-| where command_line CONTAINS "-enc"
-| risk score=70 factor="Encoded command"
-| where command_line CONTAINS "IEX" OR command_line CONTAINS "Invoke-Expression"
-| risk score=85 factor="Download cradle"
-| where command_line CONTAINS "amsi"
-| risk score=95 factor="AMSI bypass attempt"
-| where parent_process_name IN ("winword.exe", "excel.exe", "outlook.exe")
-| risk score=95 factor="Office parent process"
+| eval esc_encoded_command=(lower(command_line) CONTAINS "-enc")
+| eval esc_download_cradle=(lower(command_line) CONTAINS "iex" OR lower(command_line) CONTAINS "invoke-expression")
+| eval esc_amsi_bypass_attempt=(lower(command_line) CONTAINS "amsi")
+| eval esc_office_parent_process=(lower(parent_process_name)="winword.exe" OR lower(parent_process_name)="excel.exe" OR lower(parent_process_name)="outlook.exe")
+| risk score=min(100, 50 + if(esc_encoded_command, 20, 0) + if(esc_download_cradle, 35, 0) + if(esc_amsi_bypass_attempt, 45, 0) + if(esc_office_parent_process, 45, 0)) entity=src_host factor=concat("Suspicious PowerShell", if(esc_encoded_command, "; Encoded command", ""), if(esc_download_cradle, "; Download cradle", ""), if(esc_amsi_bypass_attempt, "; AMSI bypass attempt", ""), if(esc_office_parent_process, "; Office parent process", ""))
 | table timestamp, src_host, user, process_name, parent_process_name, command_line, risk_score, risk_factors

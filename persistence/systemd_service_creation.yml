@@ -28,8 +28,7 @@ source_type=linux_audit OR source_type=endpoint_edr
 | where file_action="create"
 | where file_path CONTAINS "/etc/systemd/" OR file_path CONTAINS "/lib/systemd/"
 | where file_path CONTAINS ".service"
-| risk score=55 entity=src_host factor="New systemd service"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=80 factor="Rare systemd service"
+| eval esc_rare_systemd_service=(host_count < 5)
+| risk score=min(100, 55 + if(esc_rare_systemd_service, 25, 0)) entity=src_host factor=concat("New systemd service", if(esc_rare_systemd_service, "; Rare systemd service", ""))
 | table timestamp, src_host, user, file_path, process_name, command_line, host_count, risk_score, risk_factors

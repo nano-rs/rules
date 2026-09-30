@@ -28,7 +28,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where process_name="net.exe" OR process_name="net1.exe"
 | where command_line CONTAINS "user" OR command_line CONTAINS "localgroup" OR command_line CONTAINS "group"
 | where command_line NOT CONTAINS "/add" AND command_line NOT CONTAINS "/delete"
-| risk score=35 entity=src_host factor="Account enumeration"
-| where command_line CONTAINS "domain"
-| risk score=55 factor="Domain account enumeration"
+| eval esc_domain_account_enumeration=(lower(command_line) CONTAINS "domain")
+| risk score=min(100, 35 + if(esc_domain_account_enumeration, 20, 0)) entity=src_host factor=concat("Account enumeration", if(esc_domain_account_enumeration, "; Domain account enumeration", ""))
 | table timestamp, src_host, user, command_line, risk_score, risk_factors

@@ -30,9 +30,7 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where event_type="process_create"
 | where process_name IN ("cscript.exe", "wscript.exe")
 | where command_line CONTAINS "Temp" OR command_line CONTAINS "AppData" OR command_line CONTAINS "Downloads"
-| risk score=55 entity=src_host factor="Script from suspicious path"
-| where parent_process_name IN ("winword.exe", "excel.exe", "outlook.exe", "powerpnt.exe")
-| risk score=85 factor="Office parent process"
-| where command_line CONTAINS "//E:jscript" OR command_line CONTAINS "//E:vbscript"
-| risk score=70 factor="Explicit script engine"
+| eval esc_office_parent_process=(lower(parent_process_name)="winword.exe" OR lower(parent_process_name)="excel.exe" OR lower(parent_process_name)="outlook.exe" OR lower(parent_process_name)="powerpnt.exe")
+| eval esc_explicit_script_engine=(lower(command_line) CONTAINS "//e:jscript" OR lower(command_line) CONTAINS "//e:vbscript")
+| risk score=min(100, 55 + if(esc_office_parent_process, 30, 0) + if(esc_explicit_script_engine, 15, 0)) entity=src_host factor=concat("Script from suspicious path", if(esc_office_parent_process, "; Office parent process", ""), if(esc_explicit_script_engine, "; Explicit script engine", ""))
 | table timestamp, src_host, user, process_name, parent_process_name, command_line, risk_score, risk_factors

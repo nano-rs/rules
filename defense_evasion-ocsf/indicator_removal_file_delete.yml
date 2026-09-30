@@ -26,7 +26,6 @@ ai_triage_hints:
 ---
 class_uid=1001 activity_id=4
 | where file.path CONTAINS ".evtx" OR file.path CONTAINS ".log" OR file.path CONTAINS ".pcap" OR file.path CONTAINS "Prefetch"
-| risk score=70 entity=device.hostname factor="Forensic artifact deletion"
-| where actor.process.name IN ("cmd.exe", "powershell.exe") AND actor.process.cmd_line CONTAINS "del"
-| risk score=80 factor="Shell-based file deletion"
+| eval esc_shell_based_file_deletion=((lower(actor.process.name)="cmd.exe" OR lower(actor.process.name)="powershell.exe") AND lower(actor.process.cmd_line) CONTAINS "del")
+| risk score=min(100, 70 + if(esc_shell_based_file_deletion, 10, 0)) entity=device.hostname factor=concat("Forensic artifact deletion", if(esc_shell_based_file_deletion, "; Shell-based file deletion", ""))
 | table time, device.hostname, actor.user.name, actor.process.name, file.path, actor.process.cmd_line, risk_score, risk_factors

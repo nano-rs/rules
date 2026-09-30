@@ -32,13 +32,11 @@ ai_triage_hints:
 ---
 class_uid=4001 OR class_uid=4002 OR class_uid=4003
 | where dst_endpoint.hostname != "" AND dst_endpoint.hostname LIKE "%.%"
-| prevalence enrich=true window=30d
+| stats min(time) as time, count as connections, values(src_endpoint.ip) as src_ips, values(actor.user.name) as users, values(dst_endpoint.ip) as dst_ips, values(dst_endpoint.port) as dst_ports, values(http_request.url.url_string) as urls by src_endpoint.hostname, dst_endpoint.hostname
+| eval esc_possible_dga_domain=match(dst_endpoint.hostname, "(?i)(^[a-z0-9]{12,}\.)|(\d{3,})")
+| prevalence dst_endpoint.hostname window=30d
 | where host_count < 10 AND prevalence_first_seen > now() - INTERVAL 24 HOUR
-| risk score=70 entity=src_endpoint.hostname factor="Connection to newly seen domain"
-| where host_count < 5
-| risk score=80 factor="Very rare domain"
-| where host_count < 3
-| risk score=90 factor="Extremely rare domain"
-| where dst_endpoint.hostname=/(^[a-z0-9]{12,}\.)|(\d{3,})/i
-| risk score=95 factor="Possible DGA domain"
-| table time, src_endpoint.hostname, src_endpoint.ip, actor.user.name, dst_endpoint.hostname, dst_endpoint.ip, dst_endpoint.port, host_count, prevalence_first_seen, is_rare, http_request.url.url_string, risk_score, risk_factors
+| eval esc_very_rare_domain=(host_count < 5)
+| eval esc_extremely_rare_domain=(host_count < 3)
+| risk score=min(100, 70 + if(esc_very_rare_domain, 10, 0) + if(esc_extremely_rare_domain, 10, 0) + if(esc_possible_dga_domain, 25, 0)) entity=src_endpoint.hostname factor=concat("Connection to newly seen domain", if(esc_very_rare_domain, "; Very rare domain", ""), if(esc_extremely_rare_domain, "; Extremely rare domain", ""), if(esc_possible_dga_domain, "; Possible DGA domain", ""))
+| table time, src_endpoint.hostname, src_ips, users, dst_endpoint.hostname, dst_ips, dst_ports, connections, host_count, prevalence_first_seen, is_rare, urls, risk_score, risk_factors, esc_possible_dga_domain
