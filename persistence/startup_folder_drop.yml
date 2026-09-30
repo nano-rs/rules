@@ -27,10 +27,8 @@ ai_triage_hints:
 source_type=windows_sysmon OR source_type=endpoint_edr
 | where file_action="create"
 | where file_path CONTAINS "\\Start Menu\\Programs\\Startup\\"
-| risk score=60 entity=src_host factor="Startup folder persistence"
-| where file_path=/(\.exe|\.bat|\.cmd|\.vbs|\.js|\.ps1|\.hta)$/i
-| risk score=80 factor="Executable in startup"
+| eval esc_executable_in_startup=match(file_path, "(?i)(\.exe|\.bat|\.cmd|\.vbs|\.js|\.ps1|\.hta)$")
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=90 factor="Rare file in startup"
-| table timestamp, src_host, user, file_path, file_hash, process_name, host_count, risk_score, risk_factors
+| eval esc_rare_file_in_startup=(host_count < 5)
+| risk score=min(100, 60 + if(esc_executable_in_startup, 20, 0) + if(esc_rare_file_in_startup, 30, 0)) entity=src_host factor=concat("Startup folder persistence", if(esc_executable_in_startup, "; Executable in startup", ""), if(esc_rare_file_in_startup, "; Rare file in startup", ""))
+| table timestamp, src_host, user, file_path, file_hash, process_name, host_count, risk_score, risk_factors, esc_executable_in_startup

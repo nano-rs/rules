@@ -30,7 +30,6 @@ source_type=windows_sysmon OR source_type=endpoint_edr
 | where file_path NOT CONTAINS "System32" AND file_path NOT CONTAINS "SysWOW64" AND file_path NOT CONTAINS "WinSxS"
 | prevalence enrich=true window=30d
 | where host_count < 5
-| risk score=70 entity=src_host factor="Rare DLL created"
-| where file_path CONTAINS "Program Files"
-| risk score=85 factor="DLL in application directory"
+| eval esc_dll_in_application_directory=(lower(file_path) CONTAINS "program files")
+| risk score=min(100, 70 + if(esc_dll_in_application_directory, 15, 0)) entity=src_host factor=concat("Rare DLL created", if(esc_dll_in_application_directory, "; DLL in application directory", ""))
 | table timestamp, src_host, user, file_path, file_hash, process_name, host_count, risk_score, risk_factors

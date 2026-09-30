@@ -27,8 +27,7 @@ ai_triage_hints:
 ---
 class_uid=1007 activity_id=3
 | where actual_permissions IN (2035711, 2097151, 2031615, 5136, 5178, 1052672)
-| risk score=75 entity=device.hostname factor="Process injection detected"
 | prevalence enrich=true window=30d
-| where host_count < 5
-| risk score=90 factor="Rare injector process"
+| eval esc_rare_injector_process=(host_count < 5)
+| risk score=min(100, 75 + if(esc_rare_injector_process, 15, 0)) entity=device.hostname factor=concat("Process injection detected", if(esc_rare_injector_process, "; Rare injector process", ""))
 | table time, device.hostname, actor.process.name, process.name, actual_permissions, actor.process.file.hashes.value, host_count, risk_score, risk_factors

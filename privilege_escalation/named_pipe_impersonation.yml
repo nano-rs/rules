@@ -27,8 +27,7 @@ ai_triage_hints:
 source_type=windows_sysmon
 | where event_type="pipe_create"
 | where command_line CONTAINS "\\pipe\\" AND (command_line CONTAINS "spoolss" OR command_line CONTAINS "efsrpc" OR command_line CONTAINS "lsarpc" OR command_line CONTAINS "samr")
-| risk score=70 entity=src_host factor="Suspicious named pipe"
 | prevalence enrich=true window=30d
-| where host_count < 10
-| risk score=85 factor="Rare pipe creator"
+| eval esc_rare_pipe_creator=(host_count < 10)
+| risk score=min(100, 70 + if(esc_rare_pipe_creator, 15, 0)) entity=src_host factor=concat("Suspicious named pipe", if(esc_rare_pipe_creator, "; Rare pipe creator", ""))
 | table timestamp, src_host, user, process_name, command_line, host_count, risk_score, risk_factors
