@@ -1,0 +1,31 @@
+---
+title: internal_domain_suffixes_changed
+description: Detects a change to the tenant's internal DNS suffix list (Settings, Risk, Internal domains). Names under an internal suffix lose domain rarity, domain risk typing and external threat-intel / WHOIS enrichment, so an unexpected addition can blind detection for attacker-registered domains. Risk is raised when a public suffix (for example cloud or prod) is added. Source is the platform audit event internal_domains_updated (NAN-3230).
+author: nano.rs
+severity: medium
+mode: staging
+detection_mode: scheduled
+schedule: "*/5 * * * *"
+lookback: 10m
+folder: platform
+mitre_tactics:
+  - TA0112
+mitre_techniques:
+  - T1685
+tags:
+  - platform_audit
+  - settings_change
+  - detection_blinding
+ai_triage_hints:
+  ignore_when:
+    - "Change matches an approved change ticket naming the same suffixes"
+    - "Only suffixes were removed (metadata shows an empty added list)"
+  suspicious_when:
+    - "A public suffix was added (metadata shows public_suffix_added true)"
+    - "The change came through an API key or from an unfamiliar source IP"
+    - "The actor's session shows other unusual settings changes or a new login location"
+---
+source_type="audit" action="internal_domains_updated"
+| eval esc_public_suffix_added=(metadata CONTAINS '"public_suffix_added":true')
+| risk score=min(100, 45 + if(esc_public_suffix_added, 40, 0)) entity=user factor=concat("Internal domain suffixes changed", if(esc_public_suffix_added, "; public suffix added", ""))
+| table timestamp, user, src_ip, message, metadata, risk_score, risk_factors
