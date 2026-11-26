@@ -4,31 +4,22 @@ Official detection rule repository for [nano](https://nano.rs). These rules are 
 
 ## Usage
 
-Add this repository in nano:
-
-1. Navigate to **Settings → Rule Repositories**
-2. Click **Add Repository**
-3. Enter:
-   - **URL**: `https://github.com/nano-rs/rules`
-   - **Branch**: `main`
-   - **Format**: nano (nPL)
-4. Click **Sync** to fetch rules
-5. Browse and import rules as needed
-
-nano registers this repository on `main` automatically, so most deployments
-never need to add it by hand.
+nano adds this repository on `main` automatically. Every install receives the
+rules as a signed content bundle published by app.nano.rs, so there is nothing
+to add by hand, and nano does not accept third-party rule repositories. Browse
+the rules in nano and import the ones you want.
 
 ## Branches
 
 | Branch | Content | Intended deployment |
 |---|---|---|
-| `main` | **OCSF 1.9** rules | nano (the Iceberg/chDB OCSF lake) |
-| `legacy/clickhouse` | Archive: the UDM rule sets plus the older OCSF rule sets | The retired ClickHouse edition |
+| `main` | **OCSF 1.9** rules | nano v2 (OCSF on ClickHouse) |
+| `legacy/clickhouse` | Frozen: the UDM rule sets plus the older OCSF rule sets | Older installs still on the legacy UDM schema |
 | `ocsf-1.9` | Frozen copy of the OCSF 1.9 rules | Kept for installs that still pin it; it receives no new rules, use `main` |
 
-Legacy ClickHouse-edition users should point their rule repository at
-`legacy/clickhouse` or migrate to the OCSF lake. That branch is an archive for
-anyone who wants to go back and maintain their own rules; it is not updated.
+nano is OCSF only. UDM is a legacy schema, kept only so older installs keep
+working until they migrate to OCSF. The `legacy/clickhouse` branch is frozen:
+it receives no changes, including bug fixes. Migrate to OCSF and use `main`.
 
 ## Repository Structure
 
